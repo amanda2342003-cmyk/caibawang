@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>特码合数单双</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 5px;
+            background-color: #fff;
+            color: #000;
+        }
+        .content {
+            font-size: 16px;
+        }
+        .win-digit {
+            color: #FF0000;
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+
+<div id="content-container" class="content"></div>
+
+<script>
+    const SPREADSHEET_ID = '19wtMwveTJ_eW09pp7ANQj1NkLNbHIA4kWLsoNAk5Xd8';
+    const SHEET_NAME_KQ = 'KQ_XIANGGANG';
+    const SHEET_NAME_DULIEU = 'DULIEU';
+
+    const URL_KQ = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME_KQ}&_=${Date.now()}`;
+    const URL_DULIEU = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME_DULIEU}&_=${Date.now()}`;
+
+    // Phân loại 合数单 và 合数双
+    const HE_DAN = ['01', '03', '05', '07', '09', '10', '12', '14', '16', '18', '21', '23', '25', '27', '29', '30', '32', '34', '36', '38', '41', '43', '45', '47', '49'];
+    const HE_SHUANG = ['02', '04', '06', '08', '11', '13', '15', '17', '19', '20', '22', '24', '26', '28', '31', '33', '35', '37', '39', '40', '42', '44', '46', '48'];
+
+    let duLieuMapB = {};
+    let duLieuMapE = {};
+
+    // 366 kỳ dự đoán cố định đã chuyển sang 合数单 và 合数双
+    const PREDICT_366 = {
+        1: "合数双", 2: "合数单", 3: "合数单", 4: "合数双", 5: "合数双", 6: "合数单", 7: "合数单", 8: "合数双", 9: "合数双", 10: "合数单",
+        11: "合数单", 12: "合数双", 13: "合数单", 14: "合数单", 15: "合数双", 16: "合数双", 17: "合数单", 18: "合数双", 19: "合数双", 20: "合数单",
+        21: "合数双", 22: "合数单", 23: "合数双", 24: "合数单", 25: "合数双", 26: "合数双", 27: "合数单", 28: "合数双", 29: "合数单", 30: "合数双",
+        31: "合数双", 32: "合数单", 33: "合数单", 34: "合数双", 35: "合数单", 36: "合数单", 37: "合数双", 38: "合数双", 39: "合数单", 40: "合数双",
+        41: "合数双", 42: "合数单", 43: "合数单", 44: "合数双", 45: "合数双", 46: "合数单", 47: "合数单", 48: "合数双", 49: "合数单", 50: "合数双",
+        51: "合数单", 52: "合数双", 53: "合数双", 54: "合数单", 55: "合数双", 56: "合数双", 57: "合数单", 58: "合数单", 59: "合数双", 60: "合数单",
+        61: "合数单", 62: "合数双", 63: "合数双", 64: "合数单", 65: "合数双", 66: "合数双", 67: "合数单", 68: "合数单", 69: "合数双", 70: "合数单",
+        71: "合数双", 72: "合数双", 73: "合数单", 74: "合数双", 75: "合数单", 76: "合数单", 77: "合数双", 78: "合数单", 79: "合数单", 80: "合数双",
+        81: "合数单", 82: "合数双", 83: "合数单", 84: "合数双", 85: "合数单", 86: "合数单", 87: "合数双", 88: "合数单", 89: "合数单", 90: "合数双",
+        91: "合数单", 92: "合数双", 93: "合数单", 94: "合数单", 95: "合数双", 96: "合数单", 97: "合数双", 98: "合数单", 99: "合数双", 100: "合数单",
+        101: "合数双", 102: "合数双", 103: "合数单", 104: "合数单", 105: "合数双", 106: "合数双", 107: "合数单", 108: "合数单", 109: "合数双", 110: "合数双",
+        111: "合数单", 112: "合数单", 113: "合数双", 114: "合数单", 115: "合数单", 116: "合数双", 117: "合数双", 118: "合数单", 119: "合数单", 120: "合数双",
+        121: "合数双", 122: "合数单", 123: "合数双", 124: "合数双", 125: "合数单", 126: "合数双", 127: "合数双", 128: "合数单", 129: "合数单", 130: "合数双",
+        131: "合数单", 132: "合数单", 133: "合数双", 134: "合数双", 135: "合数单", 136: "合数双", 137: "合数双", 138: "合数单", 139: "合数双", 140: "合数单",
+        141: "合数单", 142: "合数双", 143: "合数单", 144: "合数单", 145: "合数双", 146: "合数单", 147: "合数双", 148: "合数单", 149: "合数双", 150: "合数双",
+        151: "合数单", 152: "合数双", 153: "合数单", 154: "合数双", 155: "合数单", 156: "合数单", 157: "合数双", 158: "合数单", 159: "合数单", 160: "合数双",
+        161: "合数单", 162: "合数双", 163: "合数双", 164: "合数单", 165: "合数单", 166: "合数双", 167: "合数双", 168: "合数单", 169: "合数单", 170: "合数双",
+        171: "合数单", 172: "合数单", 173: "合数双", 174: "合数单", 175: "合数双", 176: "合数单", 177: "合数单", 178: "合数双", 179: "合数单", 180: "合数单",
+        181: "合数双", 182: "合数单", 183: "合数单", 184: "合数双", 185: "合数单", 186: "合数双", 187: "合数单", 188: "合数单", 189: "合数双", 190: "合数双",
+        191: "合数单", 192: "合数双", 193: "合数双", 194: "合数单", 195: "合数单", 196: "合数双", 197: "合数单", 198: "合数双", 199: "合数双", 200: "合数单",
+        201: "合数双", 202: "合数单", 203: "合数双", 204: "合数双", 205: "合数单", 206: "合数单", 207: "合数双", 208: "合数双", 209: "合数单", 210: "合数双",
+        211: "合数单", 212: "合数单", 213: "合数双", 214: "合数单", 215: "合数双", 216: "合数双", 217: "合数单", 218: "合数双", 219: "合数单", 220: "合数双",
+        221: "合数双", 222: "合数单", 223: "合数双", 224: "合数双", 225: "合数单", 226: "合数单", 227: "合数双", 228: "合数双", 229: "合数单", 230: "合数双",
+        231: "合数单", 232: "合数单", 233: "合数双", 234: "合数双", 235: "合数单", 236: "合数单", 237: "合数双", 238: "合数单", 239: "合数单", 240: "合数双",
+        241: "合数双", 242: "合数单", 243: "合数单", 244: "合数双", 245: "合数双", 246: "合数单", 247: "合数单", 248: "合数双", 249: "合数单", 250: "合数双",
+        251: "合数单", 252: "合数双", 253: "合数单", 254: "合数双", 255: "合数单", 256: "合数单", 257: "合数双", 258: "合数双", 259: "合数单", 260: "合数单",
+        261: "合数双", 262: "合数单", 263: "合数双", 264: "合数单", 265: "合数单", 266: "合数双", 267: "合数单", 268: "合数单", 269: "合数双", 270: "合数双",
+        271: "合数单", 272: "合数单", 273: "合数双", 274: "合数单", 275: "合数双", 276: "合数双", 277: "合数单", 278: "合数双", 279: "合数单", 280: "合数单",
+        281: "合数双", 282: "合数单", 283: "合数单", 284: "合数双", 285: "合数双", 286: "合数单", 287: "合数双", 288: "合数单", 289: "合数双", 290: "合数单",
+        291: "合数单", 292: "合数双", 293: "合数单", 294: "合数双", 295: "合数单", 296: "合数双", 297: "合数单", 298: "合数双", 299: "合数双", 300: "合数单",
+        301: "合数双", 302: "合数双", 303: "合数单", 304: "合数单", 305: "合数双", 306: "合数双", 307: "合数单", 308: "合数双", 309: "合数双", 310: "合数单",
+        311: "合数双", 312: "合数双", 313: "合数单", 314: "合数双", 315: "合数单", 316: "合数单", 317: "合数双", 318: "合数双", 319: "合数单", 320: "合数双",
+        321: "合数双", 322: "合数单", 323: "合数单", 324: "合数双", 325: "合数双", 326: "合数单", 327: "合数双", 328: "合数双", 329: "合数单", 330: "合数单",
+        331: "合数双", 332: "合数双", 333: "合数单", 334: "合数双", 335: "合数双", 336: "合数单", 337: "合数单", 338: "合数双", 339: "合数单", 340: "合数单",
+        341: "合数双", 342: "合数双", 343: "合数单", 344: "合数双", 345: "合数双", 346: "合数单", 347: "合数单", 348: "合数双", 349: "合数双", 350: "合数单",
+        351: "合数双", 352: "合数单", 353: "合数单", 354: "合数双", 355: "合数双", 356: "合数单", 357: "合数单", 358: "合数双", 359: "合数单", 360: "合数单",
+        361: "合数双", 362: "合数单", 363: "合数双", 364: "合数单", 365: "合数双", 366: "合数双"
+    };
+
+    function fetchJSONP(url) {
+        return fetch(url)
+            .then(res => res.text())
+            .then(text => {
+                const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+                if (match && match[1]) return JSON.parse(match[1]);
+                throw new Error(" ");
+            });
+    }
+
+    function getPredictForKy(kyNum) {
+        let key = ((kyNum - 1) % 366) + 1;
+        return PREDICT_366[key];
+    }
+
+    function formatTwoDigits(val) {
+        let cleanVal = String(val).trim();
+        let num = parseInt(cleanVal.replace(/\D/g, ''), 10);
+        if (isNaN(num)) return '';
+        return String(num).padStart(2, '0');
+    }
+
+    function formatThreeDigits(val) {
+        let num = parseInt(String(val).replace(/\D/g, ''), 10);
+        if (isNaN(num)) return '001';
+        return String(num).padStart(3, '0');
+    }
+
+    async function initPredict() {
+        try {
+            const rawRules = await fetchJSONP(URL_DULIEU);
+            if (rawRules.table && rawRules.table.rows) {
+                rawRules.table.rows.forEach(r => {
+                    if (r.c && r.c[0] && r.c[0].v !== null && r.c[0].v !== undefined) {
+                        let formattedNum = formatTwoDigits(r.c[0].v);
+                        let animalB = (r.c[1] && r.c[1].v !== null && r.c[1].v !== undefined) ? String(r.c[1].v).trim() : '';
+                        let animalE = (r.c[4] && r.c[4].v !== null && r.c[4].v !== undefined) ? String(r.c[4].v).trim() : '';
+                        
+                        if (formattedNum) {
+                            if (animalB) duLieuMapB[formattedNum] = animalB;
+                            if (animalE) duLieuMapE[formattedNum] = animalE;
+                        }
+                    }
+                });
+            }
+
+            const rawKQ = await fetchJSONP(URL_KQ);
+            const rows = rawKQ.table.rows;
+            let parsedList = [];
+            let lastXRowIndex = -1;
+
+            if (rows) {
+                for (let i = 0; i < rows.length; i++) {
+                    const r = rows[i].c;
+                    if (!r) continue;
+
+                    let isXRow = false;
+                    for (let colIdx = 1; colIdx <= 7; colIdx++) {
+                        if (r[colIdx] && r[colIdx].v !== null && r[colIdx].v !== undefined) {
+                            if (String(r[colIdx].v).trim().toLowerCase() === 'x') {
+                                isXRow = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isXRow) {
+                        lastXRowIndex = i;
+                        continue;
+                    }
+
+                    if (!r[0] || r[0].v === null || r[0].v === undefined) continue;
+
+                    let kyRaw = String(r[0].v).trim();
+                    let kyOnlyNum = parseInt(kyRaw.replace(/\D/g, ''), 10) || 0;
+                    
+                    let numTeFormatted = '';
+                    if (r[7] && r[7].v !== null && r[7].v !== undefined) {
+                        let valStr = String(r[7].v).trim();
+                        if (valStr !== '' && valStr !== '0' && valStr !== '00') {
+                            numTeFormatted = formatTwoDigits(valStr);
+                        }
+                    }
+
+                    if (kyOnlyNum > 0) {
+                        parsedList.push({
+                            rowIndex: i,
+                            kyNum: kyOnlyNum,
+                            numTe: numTeFormatted
+                        });
+                    }
+                }
+            }
+
+            let doneList = [];
+            let pendingKyObj = null;
+
+            for (let i = 0; i < parsedList.length; i++) {
+                let item = parsedList[i];
+                let isDone = item.numTe !== '' && item.numTe !== '00';
+                if (isDone) {
+                    item.useMapE = (lastXRowIndex !== -1 && item.rowIndex > lastXRowIndex);
+                    doneList.push(item);
+                } else {
+                    pendingKyObj = item;
+                }
+            }
+
+            let targetPredictKy = 1;
+            if (pendingKyObj) {
+                targetPredictKy = pendingKyObj.kyNum;
+            } else if (doneList.length > 0) {
+                targetPredictKy = doneList[doneList.length - 1].kyNum + 1;
+            }
+
+            let winEntries = [];
+            let consecutiveLosses = 0;
+
+            for (let i = doneList.length - 1; i >= 0; i--) {
+                let item = doneList[i];
+                let predictedChoice = getPredictForKy(item.kyNum);
+                
+                let activeMap = item.useMapE ? duLieuMapE : duLieuMapB;
+                let actualShengXiao = activeMap[item.numTe] || duLieuMapB[item.numTe] || '';
+
+                let isWin = false;
+                if (predictedChoice === "合数单" && HE_DAN.includes(item.numTe)) {
+                    isWin = true;
+                } else if (predictedChoice === "合数双" && HE_SHUANG.includes(item.numTe)) {
+                    isWin = true;
+                }
+                
+                if (isWin) {
+                    consecutiveLosses = 0;
+                    winEntries.push({ item, predicted: predictedChoice, shengXiaoWin: actualShengXiao });
+                    if (winEntries.length === 14) {
+                        break;
+                    }
+                } else {
+                    consecutiveLosses++;
+                    if (consecutiveLosses >= 3) {
+                        break;
+                    }
+                }
+            }
+
+            let nextKyNum = targetPredictKy;
+            let predictNext = getPredictForKy(nextKyNum);
+            let kyStrNext = formatThreeDigits(nextKyNum);
+
+            let htmlNextKy = `<p style="font-family:宋体;font-size:medium;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStrNext}期:<span style="color:#FF0000;">特码合数单双</span><span style="color:#808000;">♋</span><span style="color:#669900;">【</span><span style="color:#FF0000;">${predictNext}</span><span style="color:#669900;">】</span>开:<span style="color:#CC9900;">？00准</span></p>`;
+
+            let historyOutputs = [];
+
+            for (let i = 0; i < winEntries.length; i++) {
+                let entry = winEntries[i];
+                let kyStr = formatThreeDigits(entry.item.kyNum);
+                let formattedPredictHtml = `<span class="win-digit">${entry.predicted}</span>`;
+
+                historyOutputs.push(`<p style="font-family:宋体;font-size:medium;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStr}期:<span style="color:#FF0000;">特码合数单双</span><span style="color:#808000;">♋</span><span style="color:#669900;">【</span>${formattedPredictHtml}<span style="color:#669900;">】</span>开:<span style="color:#CC9900;">${entry.shengXiaoWin}${entry.item.numTe}准</span></p>`);
+            }
+
+            let finalOutputs = [htmlNextKy, ...historyOutputs];
+
+            let currentCount = finalOutputs.length;
+            if (currentCount === 1) {
+                let kyStr1 = formatThreeDigits(nextKyNum + 1);
+                let kyStr2 = formatThreeDigits(nextKyNum + 2);
+                let defaultHtml1 = `<p style="font-family:宋体;font-size:medium;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStr1}期:<span style="color:#FF0000;">特码合数单双</span><span style="color:#808000;">♋</span><span style="color:#669900;">【</span><span style="color:#FF0000;">發發發</span><span style="color:#669900;">】</span>开:<span style="color:#CC9900;">？00准</span></p>`;
+                let defaultHtml2 = `<p style="font-family:宋体;font-size:medium;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStr2}期:<span style="color:#FF0000;">特码合数单双</span><span style="color:#808000;">♋</span><span style="color:#669900;">【</span><span style="color:#FF0000;">發發發</span><span style="color:#669900;">】</span>开:<span style="color:#CC9900;">？00准</span></p>`;
+                finalOutputs.unshift(defaultHtml1);
+                finalOutputs.unshift(defaultHtml2);
+            } else if (currentCount === 2) {
+                let kyStrExtra = formatThreeDigits(nextKyNum + 1);
+                let defaultHtmlExtra = `<p style="font-family:宋体;font-size:medium;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStrExtra}期:<span style="color:#FF0000;">特码合数单双</span><span style="color:#808000;">♋</span><span style="color:#669900;">【</span><span style="color:#FF0000;">發發發</span><span style="color:#669900;">】</span>开:<span style="color:#CC9900;">？00准</span></p>`;
+                finalOutputs.unshift(defaultHtmlExtra);
+            }
+
+            document.getElementById('content-container').innerHTML = finalOutputs.join('');
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById('content-container').innerHTML = ' ';
+        }
+    }
+    initPredict();
+</script>
+
+</body>
+</html>
