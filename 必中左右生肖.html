@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>左右肖</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 5px;
+            background-color: #fff;
+            color: #000;
+        }
+        .content {
+            font-size: 16px;
+            line-height: 1.2;
+        }
+        .win-digit {
+            background-color: yellow;
+            color: #FF0000;
+        }
+        .line-p {
+            font-family: 宋体;
+            font-size: medium;
+            font-weight: bold;
+            line-height: 32px;
+            margin: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+<div id="content-container" class="content"></div>
+
+<script>
+    const SPREADSHEET_ID = '19wtMwveTJ_eW09pp7ANQj1NkLNbHIA4kWLsoNAk5Xd8';
+    const SHEET_NAME_KQ = 'KQ_XIANGGANG';
+    const SHEET_NAME_DULIEU = 'DULIEU';
+
+    const URL_KQ = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME_KQ}&_=${Date.now()}`;
+    const URL_DULIEU = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME_DULIEU}&_=${Date.now()}`;
+
+    let duLieuMapB = {};
+    let duLieuMapE = {};
+
+    // 1. Định nghĩa 2 nhóm con giáp (左肖 / 右肖)
+    const ZUO_XIAO = ["牛", "鼠", "鸡", "猴", "蛇", "龙"];
+    const YOU_XIAO = ["猪", "狗", "羊", "马", "虎", "兔"];
+
+    // 2. 366 kỳ dự đoán cố định (左肖 / 右肖)
+    const PREDICT_366 = {
+        1: "右肖", 2: "左肖", 3: "左肖", 4: "右肖", 5: "右肖", 6: "左肖", 7: "左肖", 8: "右肖", 9: "右肖", 10: "左肖",
+        11: "左肖", 12: "右肖", 13: "左肖", 14: "左肖", 15: "右肖", 16: "右肖", 17: "左肖", 18: "右肖", 19: "右肖", 20: "左肖",
+        21: "右肖", 22: "左肖", 23: "右肖", 24: "左肖", 25: "右肖", 26: "右肖", 27: "左肖", 28: "右肖", 29: "左肖", 30: "右肖",
+        31: "右肖", 32: "左肖", 33: "左肖", 34: "右肖", 35: "左肖", 36: "左肖", 37: "右肖", 38: "右肖", 39: "左肖", 40: "右肖",
+        41: "右肖", 42: "左肖", 43: "左肖", 44: "右肖", 45: "右肖", 46: "左肖", 47: "左肖", 48: "右肖", 49: "左肖", 50: "右肖",
+        51: "左肖", 52: "右肖", 53: "右肖", 54: "左肖", 55: "右肖", 56: "右肖", 57: "左肖", 58: "左肖", 59: "右肖", 60: "左肖",
+        61: "左肖", 62: "右肖", 63: "右肖", 64: "左肖", 65: "右肖", 66: "右肖", 67: "左肖", 68: "左肖", 69: "右肖", 70: "左肖",
+        71: "右肖", 72: "右肖", 73: "左肖", 74: "右肖", 75: "左肖", 76: "左肖", 77: "右肖", 78: "左肖", 79: "左肖", 80: "右肖",
+        81: "左肖", 82: "右肖", 83: "左肖", 84: "右肖", 85: "左肖", 86: "左肖", 87: "右肖", 88: "左肖", 89: "左肖", 90: "右肖",
+        91: "左肖", 92: "右肖", 93: "左肖", 94: "左肖", 95: "右肖", 96: "左肖", 97: "右肖", 98: "左肖", 99: "右肖", 100: "左肖",
+        101: "右肖", 102: "右肖", 103: "左肖", 104: "左肖", 105: "右肖", 106: "右肖", 107: "左肖", 108: "左肖", 109: "右肖", 110: "右肖",
+        111: "左肖", 112: "左肖", 113: "右肖", 114: "左肖", 115: "左肖", 116: "右肖", 117: "右肖", 118: "左肖", 119: "左肖", 120: "右肖",
+        121: "右肖", 122: "左肖", 123: "右肖", 124: "右肖", 125: "左肖", 126: "右肖", 127: "右肖", 128: "左肖", 129: "左肖", 130: "右肖",
+        131: "左肖", 132: "左肖", 133: "右肖", 134: "右肖", 135: "左肖", 136: "右肖", 137: "右肖", 138: "左肖", 139: "右肖", 140: "左肖",
+        141: "左肖", 142: "右肖", 143: "左肖", 144: "左肖", 145: "右肖", 146: "左肖", 147: "右肖", 148: "左肖", 149: "右肖", 150: "右肖",
+        151: "左肖", 152: "右肖", 153: "左肖", 154: "右肖", 155: "左肖", 156: "左肖", 157: "右肖", 158: "左肖", 159: "左肖", 160: "右肖",
+        161: "左肖", 162: "右肖", 163: "右肖", 164: "左肖", 165: "左肖", 166: "右肖", 167: "右肖", 168: "左肖", 169: "左肖", 170: "右肖",
+        171: "左肖", 172: "左肖", 173: "右肖", 174: "左肖", 175: "右肖", 176: "左肖", 177: "左肖", 178: "右肖", 179: "左肖", 180: "左肖",
+        181: "右肖", 182: "左肖", 183: "左肖", 184: "右肖", 185: "左肖", 186: "右肖", 187: "左肖", 188: "左肖", 189: "右肖", 190: "右肖",
+        191: "左肖", 192: "右肖", 193: "右肖", 194: "左肖", 195: "左肖", 196: "右肖", 197: "左肖", 198: "右肖", 199: "右肖", 200: "左肖",
+        201: "右肖", 202: "左肖", 203: "右肖", 204: "右肖", 205: "左肖", 206: "左肖", 207: "右肖", 208: "右肖", 209: "左肖", 210: "右肖",
+        211: "左肖", 212: "左肖", 213: "右肖", 214: "左肖", 215: "右肖", 216: "右肖", 217: "左肖", 218: "右肖", 219: "左肖", 220: "右肖",
+        221: "右肖", 222: "左肖", 223: "右肖", 224: "右肖", 225: "左肖", 226: "左肖", 227: "右肖", 228: "右肖", 229: "左肖", 230: "右肖",
+        231: "左肖", 232: "左肖", 233: "右肖", 234: "右肖", 235: "左肖", 236: "左肖", 237: "右肖", 238: "左肖", 239: "左肖", 240: "右肖",
+        241: "右肖", 242: "左肖", 243: "左肖", 244: "右肖", 245: "右肖", 246: "左肖", 247: "左肖", 248: "右肖", 249: "左肖", 250: "右肖",
+        251: "左肖", 252: "右肖", 253: "左肖", 254: "右肖", 255: "左肖", 256: "左肖", 257: "右肖", 258: "右肖", 259: "左肖", 260: "左肖",
+        261: "右肖", 262: "左肖", 263: "右肖", 264: "左肖", 265: "左肖", 266: "右肖", 267: "左肖", 268: "左肖", 269: "右肖", 270: "右肖",
+        271: "左肖", 272: "左肖", 273: "右肖", 274: "左肖", 275: "右肖", 276: "右肖", 277: "左肖", 278: "右肖", 279: "左肖", 280: "左肖",
+        281: "右肖", 282: "左肖", 283: "左肖", 284: "右肖", 285: "右肖", 286: "左肖", 287: "右肖", 288: "左肖", 289: "右肖", 290: "左肖",
+        291: "左肖", 292: "右肖", 293: "左肖", 294: "右肖", 295: "左肖", 296: "右肖", 297: "左肖", 298: "右肖", 299: "右肖", 300: "左肖",
+        301: "右肖", 302: "右肖", 303: "左肖", 304: "左肖", 305: "右肖", 306: "右肖", 307: "左肖", 308: "右肖", 309: "右肖", 310: "左肖",
+        311: "右肖", 312: "右肖", 313: "左肖", 314: "右肖", 315: "左肖", 316: "左肖", 317: "右肖", 318: "右肖", 319: "左肖", 320: "右肖",
+        321: "右肖", 322: "左肖", 323: "左肖", 324: "右肖", 325: "右肖", 326: "左肖", 327: "右肖", 328: "右肖", 329: "左肖", 330: "左肖",
+        331: "右肖", 332: "右肖", 333: "左肖", 334: "右肖", 335: "右肖", 336: "左肖", 337: "左肖", 338: "右肖", 339: "左肖", 340: "左肖",
+        341: "右肖", 342: "右肖", 343: "左肖", 344: "右肖", 345: "右肖", 346: "左肖", 347: "左肖", 348: "右肖", 349: "右肖", 350: "左肖",
+        351: "右肖", 352: "左肖", 353: "左肖", 354: "右肖", 355: "右肖", 356: "左肖", 357: "左肖", 358: "右肖", 359: "左肖", 360: "左肖",
+        361: "右肖", 362: "左肖", 363: "右肖", 364: "左肖", 365: "右肖", 366: "右肖"
+    };
+
+    function fetchJSONP(url) {
+        return fetch(url)
+            .then(res => res.text())
+            .then(text => {
+                const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+                if (match && match[1]) return JSON.parse(match[1]);
+                throw new Error("Cannot parse JSONP response");
+            });
+    }
+
+    function getPredictForKy(kyNum) {
+        let key = ((kyNum - 1) % 366) + 1;
+        return PREDICT_366[key];
+    }
+
+    function formatTwoDigits(val) {
+        let cleanVal = String(val).trim();
+        let num = parseInt(cleanVal.replace(/\D/g, ''), 10);
+        if (isNaN(num)) return '';
+        return String(num).padStart(2, '0');
+    }
+
+    function formatThreeDigits(val) {
+        let num = parseInt(String(val).replace(/\D/g, ''), 10);
+        if (isNaN(num)) return '001';
+        return String(num).padStart(3, '0');
+    }
+
+    function checkCategory(shengXiao) {
+        if (ZUO_XIAO.includes(shengXiao)) return "左肖";
+        if (YOU_XIAO.includes(shengXiao)) return "右肖";
+        return "";
+    }
+
+    // Hàm dựng HTML đúng định dạng chuẩn
+    function buildLineHtml(kyStr, choiceStr, resultStr) {
+        return `<p class="line-p">${kyStr}期:<span style="color:#996600;">左肖</span><span style="color:#006699;">右肖</span><span style="color:#808000;">♋</span><span style="color:#669900;">‖</span><span style="color:#FF0000;">${choiceStr}</span><span style="color:#669900;">‖</span>开:<span style="color:#CC9900;">${resultStr}</span>准</p>`;
+    }
+
+    async function initPredict() {
+        try {
+            const rawRules = await fetchJSONP(URL_DULIEU);
+            if (rawRules.table && rawRules.table.rows) {
+                rawRules.table.rows.forEach(r => {
+                    if (r.c && r.c[0] && r.c[0].v !== null && r.c[0].v !== undefined) {
+                        let formattedNum = formatTwoDigits(r.c[0].v);
+                        let animalB = (r.c[1] && r.c[1].v !== null && r.c[1].v !== undefined) ? String(r.c[1].v).trim() : '';
+                        let animalE = (r.c[4] && r.c[4].v !== null && r.c[4].v !== undefined) ? String(r.c[4].v).trim() : '';
+                        
+                        if (formattedNum) {
+                            if (animalB) duLieuMapB[formattedNum] = animalB;
+                            if (animalE) duLieuMapE[formattedNum] = animalE;
+                        }
+                    }
+                });
+            }
+
+            const rawKQ = await fetchJSONP(URL_KQ);
+            const rows = rawKQ.table.rows;
+            let parsedList = [];
+            let lastXRowIndex = -1;
+
+            if (rows) {
+                for (let i = 0; i < rows.length; i++) {
+                    const r = rows[i].c;
+                    if (!r) continue;
+
+                    let isXRow = false;
+                    for (let colIdx = 1; colIdx <= 7; colIdx++) {
+                        if (r[colIdx] && r[colIdx].v !== null && r[colIdx].v !== undefined) {
+                            if (String(r[colIdx].v).trim().toLowerCase() === 'x') {
+                                isXRow = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isXRow) {
+                        lastXRowIndex = i;
+                        continue;
+                    }
+
+                    if (!r[0] || r[0].v === null || r[0].v === undefined) continue;
+
+                    let kyRaw = String(r[0].v).trim();
+                    let kyOnlyNum = parseInt(kyRaw.replace(/\D/g, ''), 10) || 0;
+                    
+                    let numTeFormatted = '';
+                    if (r[7] && r[7].v !== null && r[7].v !== undefined) {
+                        let valStr = String(r[7].v).trim();
+                        if (valStr !== '' && valStr !== '0' && valStr !== '00') {
+                            numTeFormatted = formatTwoDigits(valStr);
+                        }
+                    }
+
+                    if (kyOnlyNum > 0) {
+                        parsedList.push({
+                            rowIndex: i,
+                            kyNum: kyOnlyNum,
+                            numTe: numTeFormatted
+                        });
+                    }
+                }
+            }
+
+            let doneList = [];
+            let pendingKyObj = null;
+
+            for (let i = 0; i < parsedList.length; i++) {
+                let item = parsedList[i];
+                let isDone = item.numTe !== '' && item.numTe !== '00';
+                if (isDone) {
+                    item.useMapE = (lastXRowIndex !== -1 && item.rowIndex > lastXRowIndex);
+                    doneList.push(item);
+                } else {
+                    pendingKyObj = item;
+                }
+            }
+
+            let targetPredictKy = 1;
+            if (pendingKyObj) {
+                targetPredictKy = pendingKyObj.kyNum;
+            } else if (doneList.length > 0) {
+                targetPredictKy = doneList[doneList.length - 1].kyNum + 1;
+            }
+
+            let winEntries = [];
+            let consecutiveLosses = 0;
+
+            for (let i = doneList.length - 1; i >= 0; i--) {
+                let item = doneList[i];
+                let predictedChoice = getPredictForKy(item.kyNum);
+                
+                let activeMap = item.useMapE ? duLieuMapE : duLieuMapB;
+                let actualShengXiao = activeMap[item.numTe] || duLieuMapB[item.numTe] || '';
+                let actualCategory = checkCategory(actualShengXiao);
+
+                let isWin = actualCategory !== '' && predictedChoice === actualCategory;
+                
+                if (isWin) {
+                    consecutiveLosses = 0;
+                    winEntries.push({ item, predicted: predictedChoice, shengXiaoWin: actualShengXiao });
+                    if (winEntries.length === 14) {
+                        break;
+                    }
+                } else {
+                    consecutiveLosses++;
+                    if (consecutiveLosses >= 3) {
+                        break;
+                    }
+                }
+            }
+
+            let nextKyNum = targetPredictKy;
+            let predictNext = getPredictForKy(nextKyNum);
+            let kyStrNext = formatThreeDigits(nextKyNum);
+
+            // Kỳ mới chưa mở thưởng
+            let htmlNextKy = buildLineHtml(kyStrNext, predictNext, "？00");
+
+            let historyOutputs = [];
+
+            for (let i = 0; i < winEntries.length; i++) {
+                let entry = winEntries[i];
+                let kyStr = formatThreeDigits(entry.item.kyNum);
+                
+                // Trúng bôi nền vàng chữ đỏ cho lựa chọn dự đoán
+                let formattedPredictedStr = `<span class="win-digit">${entry.predicted}</span>`;
+
+                // Kết quả trúng (tên con giáp + số)
+                let resultWinStr = `${entry.shengXiaoWin}${entry.item.numTe}`;
+
+                historyOutputs.push(buildLineHtml(kyStr, formattedPredictedStr, resultWinStr));
+            }
+
+            let finalOutputs = [htmlNextKy, ...historyOutputs];
+
+            // Nếu trượt quá 3 kỳ, áp dụng kỳ mặc định 【發發發發】
+            let currentCount = finalOutputs.length;
+            if (currentCount === 1) {
+                let kyStr1 = formatThreeDigits(nextKyNum + 1);
+                let kyStr2 = formatThreeDigits(nextKyNum + 2);
+                let defaultHtml1 = buildLineHtml(kyStr1, "發發發發", "？00");
+                let defaultHtml2 = buildLineHtml(kyStr2, "發發發發", "？00");
+                finalOutputs.unshift(defaultHtml1);
+                finalOutputs.unshift(defaultHtml2);
+            } else if (currentCount === 2) {
+                let kyStrExtra = formatThreeDigits(nextKyNum + 1);
+                let defaultHtmlExtra = buildLineHtml(kyStrExtra, "發發發發", "？00");
+                finalOutputs.unshift(defaultHtmlExtra);
+            }
+
+            document.getElementById('content-container').innerHTML = finalOutputs.join('');
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById('content-container').innerHTML = '';
+        }
+    }
+    initPredict();
+</script>
+
+</body>
+</html>
