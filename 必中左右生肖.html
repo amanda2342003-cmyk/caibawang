@@ -273,13 +273,13 @@
             if (currentCount === 1) {
                 let kyStr1 = formatThreeDigits(nextKyNum + 1);
                 let kyStr2 = formatThreeDigits(nextKyNum + 2);
-                let defaultHtml1 = buildLineHtml(kyStr1, "發發發發", "？00");
-                let defaultHtml2 = buildLineHtml(kyStr2, "發發發發", "？00");
+                let defaultHtml1 = buildLineHtml(kyStr1, "發發", "？00");
+                let defaultHtml2 = buildLineHtml(kyStr2, "發發", "？00");
                 finalOutputs.unshift(defaultHtml1);
                 finalOutputs.unshift(defaultHtml2);
             } else if (currentCount === 2) {
                 let kyStrExtra = formatThreeDigits(nextKyNum + 1);
-                let defaultHtmlExtra = buildLineHtml(kyStrExtra, "發發發發", "？00");
+                let defaultHtmlExtra = buildLineHtml(kyStrExtra, "發發", "？00");
                 finalOutputs.unshift(defaultHtmlExtra);
             }
 
