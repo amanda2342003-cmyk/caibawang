@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二波中特</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 5px;
+            background-color: #fff;
+            color: #000;
+        }
+        .content {
+            font-size: 16px;
+            line-height: 1.2;
+        }
+        .win-digit {
+            background-color: yellow;
+            color: #FF0000;
+        }
+        .line-p {
+            font-family: 宋体;
+            font-size: 12pt;
+            font-weight: bold;
+            line-height: 32px;
+            margin: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+<div id="content-container" class="content"></div>
+
+<script>
+    const SPREADSHEET_ID = '19wtMwveTJ_eW09pp7ANQj1NkLNbHIA4kWLsoNAk5Xd8';
+    const SHEET_NAME_KQ = 'KQ_XIANGGANG';
+    const SHEET_NAME_DULIEU = 'DULIEU';
+
+    const URL_KQ = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME_KQ}&_=${Date.now()}`;
+    const URL_DULIEU = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME_DULIEU}&_=${Date.now()}`;
+
+    let duLieuMapB = {};
+    let duLieuMapE = {};
+
+    // 1. Định nghĩa tập hợp số cho 3 Sóng (波)
+    const HONG_BO = ["01", "02", "07", "08", "12", "13", "18", "19", "23", "24", "29", "30", "34", "35", "40", "45", "46"];
+    const LAM_BO  = ["03", "04", "09", "10", "14", "15", "20", "25", "26", "31", "36", "37", "41", "42", "47", "48"];
+    const LUC_BO  = ["05", "06", "11", "16", "17", "21", "22", "27", "28", "32", "33", "38", "39", "43", "44", "49"];
+
+    // Mapping từ tên sóng gốc sang tên tiêu chuẩn
+    const NAME_MAP = {
+        "红波": "红波", "红色": "红波",
+        "蓝波": "蓝波", "蓝色": "蓝波",
+        "绿波": "绿波", "绿色": "绿波"
+    };
+
+    // Mapping từ tên sóng tới tập hợp số
+    const BO_MAP = {
+        "红波": HONG_BO,
+        "蓝波": LAM_BO,
+        "绿波": LUC_BO
+    };
+
+    // 2. Danh sách 366 kỳ dự đoán cố định sẵn (二波中特)
+    const PREDICT_366 = {
+        1: "蓝色红色", 2: "绿色蓝色", 3: "红色绿色", 4: "蓝色红色", 5: "绿色蓝色", 6: "蓝色红色", 7: "绿色蓝色", 8: "蓝色红色", 9: "红色绿色", 10: "绿色蓝色",
+        11: "红色绿色", 12: "绿色蓝色", 13: "红色绿色", 14: "蓝色红色", 15: "红色绿色", 16: "绿色蓝色", 17: "红色绿色", 18: "蓝色红色", 19: "红色绿色", 20: "蓝色红色",
+        21: "红色绿色", 22: "绿色蓝色", 23: "红色绿色", 24: "绿色蓝色", 25: "红色绿色", 26: "蓝色红色", 27: "绿色蓝色", 28: "蓝色红色", 29: "红色绿色", 30: "绿色蓝色",
+        31: "蓝色红色", 32: "绿色蓝色", 33: "红色绿色", 34: "绿色蓝色", 35: "蓝色红色", 36: "红色绿色", 37: "绿色蓝色", 38: "蓝色红色", 39: "红色绿色", 40: "绿色蓝色",
+        41: "红色绿色", 42: "绿色蓝色", 43: "红色绿色", 44: "绿色蓝色", 45: "红色绿色", 46: "蓝色红色", 47: "绿色蓝色", 48: "红色绿色", 49: "蓝色红色", 50: "绿色蓝色",
+        51: "蓝色红色", 52: "红色绿色", 53: "蓝色红色", 54: "绿色蓝色", 55: "蓝色红色", 56: "红色绿色", 57: "蓝色红色", 58: "红色绿色", 59: "绿色蓝色", 60: "红色绿色",
+        61: "绿色蓝色", 62: "红色绿色", 63: "蓝色红色", 64: "绿色蓝色", 65: "蓝色红色", 66: "绿色蓝色", 67: "蓝色红色", 68: "红色绿色", 69: "蓝色红色", 70: "绿色蓝色",
+        71: "蓝色红色", 72: "红色绿色", 73: "绿色蓝色", 74: "蓝色红色", 75: "红色绿色", 76: "绿色蓝色", 77: "蓝色红色", 78: "红色绿色", 79: "绿色蓝色", 80: "红色绿色",
+        81: "绿色蓝色", 82: "蓝色红色", 83: "绿色蓝色", 84: "红色绿色", 85: "绿色蓝色", 86: "蓝色红色", 87: "红色绿色", 88: "蓝色红色", 89: "绿色蓝色", 90: "红色绿色",
+        91: "蓝色红色", 92: "绿色蓝色", 93: "红色绿色", 94: "绿色蓝色", 95: "红色绿色", 96: "蓝色红色", 97: "绿色蓝色", 98: "红色绿色", 99: "蓝色红色", 100: "绿色蓝色",
+        101: "蓝色红色", 102: "红色绿色", 103: "蓝色红色", 104: "绿色蓝色", 105: "蓝色红色", 106: "绿色蓝色", 107: "红色绿色", 108: "蓝色红色", 109: "绿色蓝色", 110: "蓝色红色",
+        111: "绿色蓝色", 112: "红色绿色", 113: "绿色蓝色", 114: "红色绿色", 115: "绿色蓝色", 116: "红色绿色", 117: "绿色蓝色", 118: "蓝色红色", 119: "绿色蓝色", 120: "蓝色红色",
+        121: "绿色蓝色", 122: "蓝色红色", 123: "绿色蓝色", 124: "蓝色红色", 125: "绿色蓝色", 126: "蓝色红色", 127: "红色绿色", 128: "蓝色红色", 129: "红色绿色", 130: "绿色蓝色",
+        131: "红色绿色", 132: "绿色蓝色", 133: "红色绿色", 134: "绿色蓝色", 135: "红色绿色", 136: "蓝色红色", 137: "绿色蓝色", 138: "蓝色红色", 139: "绿色蓝色", 140: "蓝色红色",
+        141: "绿色蓝色", 142: "蓝色红色", 143: "绿色蓝色", 144: "红色绿色", 145: "蓝色红色", 146: "绿色蓝色", 147: "红色绿色", 148: "蓝色红色", 149: "红色绿色", 150: "蓝色红色",
+        151: "绿色蓝色", 152: "红色绿色", 153: "蓝色红色", 154: "红色绿色", 155: "绿色蓝色", 156: "蓝色红色", 157: "红色绿色", 158: "绿色蓝色", 159: "红色绿色", 160: "绿色蓝色",
+        161: "蓝色红色", 162: "红色绿色", 163: "绿色蓝色", 164: "红色绿色", 165: "蓝色红色", 166: "绿色蓝色", 167: "蓝色红色", 168: "绿色蓝色", 169: "红色绿色", 170: "绿色蓝色",
+        171: "蓝色红色", 172: "绿色蓝色", 173: "蓝色红色", 174: "红色绿色", 175: "蓝色红色", 176: "绿色蓝色", 177: "蓝色红色", 178: "绿色蓝色", 179: "红色绿色", 180: "蓝色红色",
+        181: "红色绿色", 182: "绿色蓝色", 183: "红色绿色", 184: "绿色蓝色", 185: "蓝色红色", 186: "红色绿色", 187: "蓝色红色", 188: "绿色蓝色", 189: "蓝色红色", 190: "红色绿色",
+        191: "蓝色红色", 192: "绿色蓝色", 193: "蓝色红色", 194: "绿色蓝色", 195: "红色绿色", 196: "绿色蓝色", 197: "蓝色红色", 198: "绿色蓝色", 199: "蓝色红色", 200: "红色绿色",
+        201: "红色蓝色", 202: "蓝色绿色", 203: "绿色红色", 204: "蓝色绿色", 205: "红色蓝色", 206: "绿色红色", 207: "红色蓝色", 208: "蓝色绿色", 209: "红色蓝色", 210: "绿色红色",
+        211: "红色蓝色", 212: "蓝色绿色", 213: "绿色红色", 214: "红色蓝色", 215: "绿色红色", 216: "红色蓝色", 217: "绿色红色", 218: "红色蓝色", 219: "绿色红色", 220: "红色蓝色",
+        221: "绿色红色", 222: "蓝色绿色", 223: "红色蓝色", 224: "绿色红色", 225: "红色蓝色", 226: "绿色红色", 227: "红色蓝色", 228: "蓝色绿色", 229: "红色蓝色", 230: "绿色红色",
+        231: "红色蓝色", 232: "蓝色绿色", 233: "绿色红色", 234: "红色蓝色", 235: "绿色红色", 236: "红色蓝色", 237: "蓝色绿色", 238: "绿色红色", 239: "蓝色绿色", 240: "绿色红色",
+        241: "红色蓝色", 242: "蓝色绿色", 243: "绿色红色", 244: "红色蓝色", 245: "蓝色绿色", 246: "红色蓝色", 247: "绿色红色", 248: "红色蓝色", 249: "绿色红色", 250: "红色蓝色",
+        251: "蓝色绿色", 252: "红色蓝色", 253: "绿色红色", 254: "蓝色绿色", 255: "绿色红色", 256: "蓝色绿色", 257: "红色蓝色", 258: "绿色红色", 259: "红色蓝色", 260: "蓝色绿色",
+        261: "红色蓝色", 262: "蓝色绿色", 263: "绿色红色", 264: "蓝色绿色", 265: "绿色红色", 266: "红色蓝色", 267: "绿色红色", 268: "红色蓝色", 269: "绿色红色", 270: "红色蓝色",
+        271: "绿色红色", 272: "红色蓝色", 273: "绿色红色", 274: "红色蓝色", 275: "蓝色绿色", 276: "红色蓝色", 277: "绿色红色", 278: "红色蓝色", 279: "蓝色绿色", 280: "红色蓝色",
+        281: "蓝色绿色", 282: "绿色红色", 283: "蓝色绿色", 284: "红色蓝色", 285: "绿色红色", 286: "蓝色绿色", 287: "绿色红色", 288: "蓝色绿色", 289: "红色蓝色", 290: "蓝色绿色",
+        291: "红色蓝色", 292: "绿色红色", 293: "蓝色绿色", 294: "绿色红色", 295: "蓝色绿色", 296: "红色蓝色", 297: "蓝色绿色", 298: "红色蓝色", 299: "绿色红色", 300: "红色蓝色",
+        301: "蓝色绿色", 302: "红色蓝色", 303: "蓝色绿色", 304: "绿色红色", 305: "红色蓝色", 306: "蓝色绿色", 307: "红色蓝色", 308: "绿色红色", 309: "蓝色绿色", 310: "红色蓝色",
+        311: "绿色红色", 312: "蓝色绿色", 313: "绿色红色", 314: "红色蓝色", 315: "绿色红色", 316: "蓝色绿色", 317: "绿色红色", 318: "蓝色绿色", 319: "红色蓝色", 320: "绿色红色",
+        321: "红色蓝色", 322: "绿色红色", 323: "红色蓝色", 324: "绿色红色", 325: "红色蓝色", 326: "蓝色绿色", 327: "红色蓝色", 328: "绿色红色", 329: "红色蓝色", 330: "绿色红色",
+        331: "蓝色绿色", 332: "红色蓝色", 333: "绿色红色", 334: "红色蓝色", 335: "蓝色绿色", 336: "绿色红色", 337: "红色蓝色", 338: "绿色红色", 339: "蓝色绿色", 340: "绿色红色",
+        341: "蓝色绿色", 342: "红色蓝色", 343: "蓝色绿色", 344: "红色蓝色", 345: "绿色红色", 346: "红色蓝色", 347: "蓝色绿色", 348: "红色蓝色", 349: "蓝色绿色", 350: "绿色红色",
+        351: "红色蓝色", 352: "绿色红色", 353: "蓝色绿色", 354: "红色蓝色", 355: "绿色红色", 356: "蓝色绿色", 357: "红色蓝色", 358: "蓝色绿色", 359: "红色蓝色", 360: "蓝色绿色",
+        361: "红色蓝色", 362: "蓝色绿色", 363: "红色蓝色", 364: "绿色红色", 365: "红色蓝色", 366: "蓝色绿色"
+    };
+
+    function fetchJSONP(url) {
+        return fetch(url)
+            .then(res => res.text())
+            .then(text => {
+                const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+                if (match && match[1]) return JSON.parse(match[1]);
+                throw new Error("Cannot parse JSONP response");
+            });
+    }
+
+    // Tách 2 sóng từ chuỗi dự đoán (VD: "蓝色红色" -> ["蓝波", "红波"])
+    function getTwoBoForKy(kyNum) {
+        let key = ((kyNum - 1) % 366) + 1;
+        let rawStr = PREDICT_366[key] || "红色蓝色";
+        let bo1_raw = rawStr.substring(0, 2);
+        let bo2_raw = rawStr.substring(2, 4);
+        return [NAME_MAP[bo1_raw] || bo1_raw, NAME_MAP[bo2_raw] || bo2_raw];
+    }
+
+    function formatTwoDigits(val) {
+        let cleanVal = String(val).trim();
+        let num = parseInt(cleanVal.replace(/\D/g, ''), 10);
+        if (isNaN(num)) return '';
+        return String(num).padStart(2, '0');
+    }
+
+    function formatThreeDigits(val) {
+        let num = parseInt(String(val).replace(/\D/g, ''), 10);
+        if (isNaN(num)) return '001';
+        return String(num).padStart(3, '0');
+    }
+
+    async function initPredict() {
+        try {
+            const rawRules = await fetchJSONP(URL_DULIEU);
+            if (rawRules.table && rawRules.table.rows) {
+                rawRules.table.rows.forEach(r => {
+                    if (r.c && r.c[0] && r.c[0].v !== null && r.c[0].v !== undefined) {
+                        let formattedNum = formatTwoDigits(r.c[0].v);
+                        let animalB = (r.c[1] && r.c[1].v !== null && r.c[1].v !== undefined) ? String(r.c[1].v).trim() : '';
+                        let animalE = (r.c[4] && r.c[4].v !== null && r.c[4].v !== undefined) ? String(r.c[4].v).trim() : '';
+                        
+                        if (formattedNum) {
+                            if (animalB) duLieuMapB[formattedNum] = animalB;
+                            if (animalE) duLieuMapE[formattedNum] = animalE;
+                        }
+                    }
+                });
+            }
+
+            const rawKQ = await fetchJSONP(URL_KQ);
+            const rows = rawKQ.table.rows;
+            let parsedList = [];
+            let lastXRowIndex = -1;
+
+            if (rows) {
+                for (let i = 0; i < rows.length; i++) {
+                    const r = rows[i].c;
+                    if (!r) continue;
+
+                    let isXRow = false;
+                    for (let colIdx = 1; colIdx <= 7; colIdx++) {
+                        if (r[colIdx] && r[colIdx].v !== null && r[colIdx].v !== undefined) {
+                            if (String(r[colIdx].v).trim().toLowerCase() === 'x') {
+                                isXRow = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isXRow) {
+                        lastXRowIndex = i;
+                        continue;
+                    }
+
+                    if (!r[0] || r[0].v === null || r[0].v === undefined) continue;
+
+                    let kyRaw = String(r[0].v).trim();
+                    let kyOnlyNum = parseInt(kyRaw.replace(/\D/g, ''), 10) || 0;
+                    
+                    let numTeFormatted = '';
+                    if (r[7] && r[7].v !== null && r[7].v !== undefined) {
+                        let valStr = String(r[7].v).trim();
+                        if (valStr !== '' && valStr !== '0' && valStr !== '00') {
+                            numTeFormatted = formatTwoDigits(valStr);
+                        }
+                    }
+
+                    if (kyOnlyNum > 0) {
+                        parsedList.push({
+                            rowIndex: i,
+                            kyNum: kyOnlyNum,
+                            numTe: numTeFormatted
+                        });
+                    }
+                }
+            }
+
+            let doneList = [];
+            let pendingKyObj = null;
+
+            for (let i = 0; i < parsedList.length; i++) {
+                let item = parsedList[i];
+                let isDone = item.numTe !== '' && item.numTe !== '00';
+                if (isDone) {
+                    item.useMapE = (lastXRowIndex !== -1 && item.rowIndex > lastXRowIndex);
+                    doneList.push(item);
+                } else {
+                    pendingKyObj = item;
+                }
+            }
+
+            let targetPredictKy = 1;
+            if (pendingKyObj) {
+                targetPredictKy = pendingKyObj.kyNum;
+            } else if (doneList.length > 0) {
+                targetPredictKy = doneList[doneList.length - 1].kyNum + 1;
+            }
+
+            let winEntries = [];
+            let consecutiveLosses = 0;
+
+            for (let i = doneList.length - 1; i >= 0; i--) {
+                let item = doneList[i];
+                let [bo1, bo2] = getTwoBoForKy(item.kyNum);
+                
+                let listSo1 = BO_MAP[bo1] || [];
+                let listSo2 = BO_MAP[bo2] || [];
+
+                let hitBo = "";
+                if (listSo1.includes(item.numTe)) {
+                    hitBo = "bo1";
+                } else if (listSo2.includes(item.numTe)) {
+                    hitBo = "bo2";
+                }
+
+                let isWin = (hitBo !== "");
+                
+                if (isWin) {
+                    consecutiveLosses = 0;
+                    winEntries.push({ item, bo1, bo2, hitBo });
+                    if (winEntries.length === 14) {
+                        break;
+                    }
+                } else {
+                    consecutiveLosses++;
+                    if (consecutiveLosses >= 3) {
+                        break;
+                    }
+                }
+            }
+
+            let nextKyNum = targetPredictKy;
+            let [nextBo1, nextBo2] = getTwoBoForKy(nextKyNum);
+            let kyStrNext = formatThreeDigits(nextKyNum);
+
+            // Kỳ mới chưa mở thưởng: đúng chuẩn mẫu mã gốc
+            let htmlNextKy = `<p class="line-p">${kyStrNext}期：二波中特→【${nextBo1}${nextBo2}】←开:<span style="color:#FF0000;">？00准</span></p>`;
+
+            let historyOutputs = [];
+
+            for (let i = 0; i < winEntries.length; i++) {
+                let entry = winEntries[i];
+                let kyStr = formatThreeDigits(entry.item.kyNum);
+                
+                // Bôi nền vàng, chữ đỏ CHỈ CHO SÓNG TRÚNG
+                let choiceHtml = "";
+                if (entry.hitBo === "bo1") {
+                    choiceHtml = `【<span class="win-digit">${entry.bo1}</span>${entry.bo2}】`;
+                } else if (entry.hitBo === "bo2") {
+                    choiceHtml = `【${entry.bo1}<span class="win-digit">${entry.bo2}</span>】`;
+                } else {
+                    choiceHtml = `【${entry.bo1}${entry.bo2}】`;
+                }
+
+                // Lấy tên con giáp tương ứng
+                let activeMap = entry.item.useMapE ? duLieuMapE : duLieuMapB;
+                let actualShengXiao = activeMap[entry.item.numTe] || duLieuMapB[entry.item.numTe] || '';
+                
+                // Thay thế ？00 bằng tên con giáp và số tương ứng (VD: 鼠20准)
+                let resultText = `${actualShengXiao}${entry.item.numTe}准`;
+
+                historyOutputs.push(`<p class="line-p">${kyStr}期：二波中特→${choiceHtml}←开:<span style="color:#FF0000;">${resultText}</span></p>`);
+            }
+
+            let finalOutputs = [htmlNextKy, ...historyOutputs];
+
+            // Nếu trượt quá 3 kỳ, áp dụng kỳ mặc định 【發發發發】
+            let currentCount = finalOutputs.length;
+            if (currentCount === 1) {
+                let kyStr1 = formatThreeDigits(nextKyNum + 1);
+                let kyStr2 = formatThreeDigits(nextKyNum + 2);
+                let defaultHtml1 = `<p class="line-p">${kyStr1}期：二波中特→【發發發發】←开:<span style="color:#FF0000;">？00准</span></p>`;
+                let defaultHtml2 = `<p class="line-p">${kyStr2}期：二波中特→【發發發發】←开:<span style="color:#FF0000;">？00准</span></p>`;
+                finalOutputs.unshift(defaultHtml1);
+                finalOutputs.unshift(defaultHtml2);
+            } else if (currentCount === 2) {
+                let kyStrExtra = formatThreeDigits(nextKyNum + 1);
+                let defaultHtmlExtra = `<p class="line-p">${kyStrExtra}期：二波中特→【發發發發】←开:<span style="color:#FF0000;">？00准</span></p>`;
+                finalOutputs.unshift(defaultHtmlExtra);
+            }
+
+            document.getElementById('content-container').innerHTML = finalOutputs.join('');
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById('content-container').innerHTML = '';
+        }
+    }
+    initPredict();
+</script>
+
+</body>
+</html>
