@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单双肖中特</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 5px;
+            background-color: #fff;
+            color: #000;
+        }
+        .content {
+            font-size: 16px;
+        }
+        .win-digit {
+            color: #FF0000;
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+
+<div id="content-container" class="content"></div>
+
+<script>
+    const SPREADSHEET_ID = '19wtMwveTJ_eW09pp7ANQj1NkLNbHIA4kWLsoNAk5Xd8';
+    const SHEET_NAME_KQ = 'KQ_XIANGGANG';
+    const SHEET_NAME_DULIEU = 'DULIEU';
+
+    const URL_KQ = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME_KQ}&_=${Date.now()}`;
+    const URL_DULIEU = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME_DULIEU}&_=${Date.now()}`;
+
+    let duLieuMapB = {};
+    let duLieuMapE = {};
+
+    const DAN = ["01", "03", "05", "07", "09", "11", "13", "15", "17", "19", "21", "23", "25", "27", "29", "31", "33", "35", "37", "39", "41", "43", "45", "47", "49"];
+    const SHUANG = ["02", "04", "06", "08", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30", "32", "34", "36", "38", "40", "42", "44", "46", "48"];
+
+    // 366 kỳ dự đoán cố định đã thêm trực tiếp chữ "数"
+    const STATIC_PREDICTIONS = {
+        1: "单数", 2: "双数", 3: "双数", 4: "单数", 5: "单数", 6: "双数", 7: "双数", 8: "单数", 9: "单数", 10: "双数",
+        11: "双数", 12: "单数", 13: "双数", 14: "双数", 15: "单数", 16: "单数", 17: "双数", 18: "单数", 19: "单数", 20: "双数",
+        21: "单数", 22: "双数", 23: "单数", 24: "双数", 25: "单数", 26: "单数", 27: "双数", 28: "单数", 29: "双数", 30: "单数",
+        31: "单数", 32: "双数", 33: "双数", 34: "单数", 35: "双数", 36: "双数", 37: "单数", 38: "单数", 39: "双数", 40: "单数",
+        41: "单数", 42: "双数", 43: "双数", 44: "单数", 45: "单数", 46: "双数", 47: "双数", 48: "单数", 49: "双数", 50: "单数",
+        51: "双数", 52: "单数", 53: "单数", 54: "双数", 55: "单数", 56: "单数", 57: "双数", 58: "双数", 59: "单数", 60: "双数",
+        61: "双数", 62: "单数", 63: "单数", 64: "双数", 65: "单数", 66: "单数", 67: "双数", 68: "双数", 69: "单数", 70: "双数",
+        71: "单数", 72: "单数", 73: "双数", 74: "单数", 75: "双数", 76: "双数", 77: "单数", 78: "双数", 79: "双数", 80: "单数",
+        81: "双数", 82: "单数", 83: "双数", 84: "单数", 85: "双数", 86: "双数", 87: "单数", 88: "双数", 89: "双数", 90: "单数",
+        91: "双数", 92: "单数", 93: "双数", 94: "双数", 95: "单数", 96: "双数", 97: "单数", 98: "双数", 99: "单数", 100: "双数",
+        101: "单数", 102: "单数", 103: "双数", 104: "双数", 105: "单数", 106: "单数", 107: "双数", 108: "双数", 109: "单数", 110: "单数",
+        111: "双数", 112: "双数", 113: "单数", 114: "双数", 115: "双数", 116: "单数", 117: "单数", 118: "双数", 119: "双数", 120: "单数",
+        121: "单数", 122: "双数", 123: "单数", 124: "单数", 125: "双数", 126: "单数", 127: "单数", 128: "双数", 129: "双数", 130: "单数",
+        131: "双数", 132: "双数", 133: "单数", 134: "单数", 135: "双数", 136: "单数", 137: "单数", 138: "双数", 139: "单数", 140: "双数",
+        141: "双数", 142: "单数", 143: "双数", 144: "双数", 145: "单数", 146: "双数", 147: "单数", 148: "双数", 149: "单数", 150: "单数",
+        151: "双数", 152: "单数", 153: "双数", 154: "单数", 155: "双数", 156: "双数", 157: "单数", 158: "双数", 159: "双数", 160: "单数",
+        161: "双数", 162: "单数", 163: "单数", 164: "双数", 165: "双数", 166: "单数", 167: "单数", 168: "双数", 169: "双数", 170: "单数",
+        171: "双数", 172: "双数", 173: "单数", 174: "双数", 175: "单数", 176: "双数", 177: "双数", 178: "单数", 179: "双数", 180: "双数",
+        181: "单数", 182: "双数", 183: "双数", 184: "单数", 185: "双数", 186: "单数", 187: "双数", 188: "双数", 189: "单数", 190: "单数",
+        191: "双数", 192: "单数", 193: "单数", 194: "双数", 195: "双数", 196: "单数", 197: "双数", 198: "单数", 199: "单数", 200: "双数",
+        201: "单数", 202: "双数", 203: "单数", 204: "单数", 205: "双数", 206: "双数", 207: "单数", 208: "单数", 209: "双数", 210: "单数",
+        211: "双数", 212: "双数", 213: "单数", 214: "双数", 215: "单数", 216: "单数", 217: "双数", 218: "单数", 219: "双数", 220: "单数",
+        221: "单数", 222: "双数", 223: "单数", 224: "单数", 225: "双数", 226: "双数", 227: "单数", 228: "单数", 229: "双数", 230: "单数",
+        231: "双数", 232: "双数", 233: "单数", 234: "单数", 235: "双数", 236: "双数", 237: "单数", 238: "双数", 239: "双数", 240: "单数",
+        241: "单数", 242: "双数", 243: "双数", 244: "单数", 245: "单数", 246: "双数", 247: "双数", 248: "单数", 249: "双数", 250: "单数",
+        251: "双数", 252: "单数", 253: "双数", 254: "单数", 255: "双数", 256: "双数", 257: "单数", 258: "单数", 259: "双数", 260: "双数",
+        261: "单数", 262: "双数", 263: "单数", 264: "双数", 265: "双数", 266: "单数", 267: "双数", 268: "双数", 269: "单数", 270: "单数",
+        271: "双数", 272: "双数", 273: "单数", 274: "双数", 275: "单数", 276: "单数", 277: "双数", 278: "单数", 279: "双数", 280: "双数",
+        281: "单数", 282: "双数", 283: "双数", 284: "单数", 285: "单数", 286: "双数", 287: "单数", 288: "双数", 289: "单数", 290: "双数",
+        291: "双数", 292: "单数", 293: "双数", 294: "单数", 295: "双数", 296: "单数", 297: "双数", 298: "单数", 299: "单数", 300: "双数",
+        301: "单数", 302: "单数", 303: "双数", 304: "双数", 305: "单数", 306: "单数", 307: "双数", 308: "单数", 309: "单数", 310: "双数",
+        311: "单数", 312: "单数", 313: "双数", 314: "单数", 315: "双数", 316: "双数", 317: "单数", 318: "单数", 319: "双数", 320: "单数",
+        321: "单数", 322: "双数", 323: "双数", 324: "单数", 325: "单数", 326: "双数", 327: "单数", 328: "单数", 329: "双数", 330: "双数",
+        331: "单数", 332: "单数", 333: "双数", 334: "单数", 335: "单数", 336: "双数", 337: "双数", 338: "单数", 339: "双数", 340: "双数",
+        341: "单数", 342: "单数", 343: "双数", 344: "单数", 345: "单数", 346: "双数", 347: "双数", 348: "单数", 349: "单数", 350: "双数",
+        351: "单数", 352: "双数", 353: "双数", 354: "单数", 355: "单数", 356: "双数", 357: "双数", 358: "单数", 359: "双数", 360: "双数",
+        361: "单数", 362: "双数", 363: "单数", 364: "双数", 365: "单数", 366: "双数"
+    };
+
+    function fetchJSONP(url) {
+        return fetch(url)
+            .then(res => res.text())
+            .then(text => {
+                const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+                if (match && match[1]) return JSON.parse(match[1]);
+                throw new Error(" ");
+            });
+    }
+
+    function getPredictDanShuangForKy(kyNum) {
+        let actualKy = ((kyNum - 1) % 366) + 1;
+        if (STATIC_PREDICTIONS[actualKy]) {
+            return STATIC_PREDICTIONS[actualKy];
+        }
+        let cycle = Math.floor((actualKy - 1) / 2);
+        return cycle % 2 === 0 ? "双数" : "单数";
+    }
+
+    function getDanShuangByNum(numStr) {
+        if (DAN.includes(numStr)) return "单数";
+        if (SHUANG.includes(numStr)) return "双数";
+        return "";
+    }
+
+    function formatTwoDigits(val) {
+        let cleanVal = String(val).trim();
+        let num = parseInt(cleanVal.replace(/\D/g, ''), 10);
+        if (isNaN(num)) return '';
+        return String(num).padStart(2, '0');
+    }
+
+    function formatThreeDigits(val) {
+        let num = parseInt(String(val).replace(/\D/g, ''), 10);
+        if (isNaN(num)) return '001';
+        return String(num).padStart(3, '0');
+    }
+
+    async function initPredict() {
+        try {
+            const rawRules = await fetchJSONP(URL_DULIEU);
+            if (rawRules.table && rawRules.table.rows) {
+                rawRules.table.rows.forEach(r => {
+                    if (r.c && r.c[0] && r.c[0].v !== null && r.c[0].v !== undefined) {
+                        let formattedNum = formatTwoDigits(r.c[0].v);
+                        let animalB = (r.c[1] && r.c[1].v !== null && r.c[1].v !== undefined) ? String(r.c[1].v).trim() : '';
+                        let animalE = (r.c[4] && r.c[4].v !== null && r.c[4].v !== undefined) ? String(r.c[4].v).trim() : '';
+                        
+                        if (formattedNum) {
+                            if (animalB) duLieuMapB[formattedNum] = animalB;
+                            if (animalE) duLieuMapE[formattedNum] = animalE;
+                        }
+                    }
+                });
+            }
+
+            const rawKQ = await fetchJSONP(URL_KQ);
+            const rows = rawKQ.table.rows;
+            let parsedList = [];
+            let lastXRowIndex = -1;
+
+            if (rows) {
+                for (let i = 0; i < rows.length; i++) {
+                    const r = rows[i].c;
+                    if (!r) continue;
+
+                    let isXRow = false;
+                    for (let colIdx = 1; colIdx <= 7; colIdx++) {
+                        if (r[colIdx] && r[colIdx].v !== null && r[colIdx].v !== undefined) {
+                            if (String(r[colIdx].v).trim().toLowerCase() === 'x') {
+                                isXRow = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isXRow) {
+                        lastXRowIndex = i;
+                        continue;
+                    }
+
+                    if (!r[0] || r[0].v === null || r[0].v === undefined) continue;
+
+                    let kyRaw = String(r[0].v).trim();
+                    let kyOnlyNum = parseInt(kyRaw.replace(/\D/g, ''), 10) || 0;
+                    
+                    let numTeFormatted = '';
+                    if (r[7] && r[7].v !== null && r[7].v !== undefined) {
+                        let valStr = String(r[7].v).trim();
+                        if (valStr !== '' && valStr !== '0' && valStr !== '00') {
+                            numTeFormatted = formatTwoDigits(valStr);
+                        }
+                    }
+
+                    if (kyOnlyNum > 0) {
+                        parsedList.push({
+                            rowIndex: i,
+                            kyNum: kyOnlyNum,
+                            numTe: numTeFormatted
+                        });
+                    }
+                }
+            }
+
+            let doneList = [];
+            let pendingKyObj = null;
+
+            for (let i = 0; i < parsedList.length; i++) {
+                let item = parsedList[i];
+                let isDone = item.numTe !== '' && item.numTe !== '00';
+                if (isDone) {
+                    item.useMapE = (lastXRowIndex !== -1 && item.rowIndex > lastXRowIndex);
+                    doneList.push(item);
+                } else {
+                    pendingKyObj = item;
+                }
+            }
+
+            let targetPredictKy = 1;
+            if (pendingKyObj) {
+                targetPredictKy = pendingKyObj.kyNum;
+            } else if (doneList.length > 0) {
+                targetPredictKy = doneList[doneList.length - 1].kyNum + 1;
+            }
+
+            let winEntries = [];
+            let consecutiveLosses = 0;
+
+            for (let i = doneList.length - 1; i >= 0; i--) {
+                let item = doneList[i];
+                let predicted = getPredictDanShuangForKy(item.kyNum);
+                let actual = getDanShuangByNum(item.numTe);
+                let isValidNum = (DAN.includes(item.numTe) || SHUANG.includes(item.numTe));
+                let isWin = isValidNum && actual && (predicted === actual);
+                
+                if (isWin) {
+                    consecutiveLosses = 0;
+                    winEntries.push({ item, predicted, actual });
+                    if (winEntries.length === 14) {
+                        break;
+                    }
+                } else {
+                    consecutiveLosses++;
+                    if (consecutiveLosses >= 3) {
+                        break;
+                    }
+                }
+            }
+
+            let nextKyNum = targetPredictKy;
+            let predictNext = getPredictDanShuangForKy(nextKyNum);
+            let kyStrNext = formatThreeDigits(nextKyNum);
+
+            let htmlNextKy = `<p style="font-family:宋体;font-size:medium;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStrNext}期:<span style="color:#FF0000;">单双肖中特</span><span style="color:#808000;">♋</span><span style="color:#669900;">‖</span><span style="color:#FF0000;">${predictNext}</span><span style="color:#669900;">‖</span>开:<span style="color:#CC9900;">？00准</span></p>`;
+
+            let historyOutputs = [];
+
+            for (let i = 0; i < winEntries.length; i++) {
+                let entry = winEntries[i];
+                let activeMap = entry.item.useMapE ? duLieuMapE : duLieuMapB;
+                let shengXiaoWin = activeMap[entry.item.numTe] || duLieuMapB[entry.item.numTe] || '';
+                
+                let resStrWin = shengXiaoWin + entry.item.numTe + '准';
+                let kyStr = formatThreeDigits(entry.item.kyNum);
+                let formattedPredictHtml = `<span class="win-digit">${entry.predicted}</span>`;
+                historyOutputs.push(`<p style="font-family:宋体;font-size:medium;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStr}期:<span style="color:#FF0000;">单双肖中特</span><span style="color:#808000;">♋</span><span style="color:#669900;">‖</span>${formattedPredictHtml}<span style="color:#669900;">‖</span>开:<span style="color:#CC9900;">${resStrWin}</span></p>`);
+            }
+
+            let finalOutputs = [htmlNextKy, ...historyOutputs];
+
+            let currentCount = finalOutputs.length;
+            if (currentCount === 1) {
+                let kyStr1 = formatThreeDigits(nextKyNum + 1);
+                let kyStr2 = formatThreeDigits(nextKyNum + 2);
+                let defaultHtml1 = `<p style="font-family:宋体;font-size:medium;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStr1}期:<span style="color:#FF0000;">单双肖中特</span><span style="color:#808000;">♋</span><span style="color:#669900;">‖</span><span style="color:#FF0000;">發發</span><span style="color:#669900;">‖</span>开:<span style="color:#CC9900;">？00准</span></p>`;
+                let defaultHtml2 = `<p style="font-family:宋体;font-size:medium;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStr2}期:<span style="color:#FF0000;">单双肖中特</span><span style="color:#808000;">♋</span><span style="color:#669900;">‖</span><span style="color:#FF0000;">發發</span><span style="color:#669900;">‖</span>开:<span style="color:#CC9900;">？00准</span></p>`;
+                finalOutputs.unshift(defaultHtml1);
+                finalOutputs.unshift(defaultHtml2);
+            } else if (currentCount === 2) {
+                let kyStrExtra = formatThreeDigits(nextKyNum + 1);
+                let defaultHtmlExtra = `<p style="font-family:宋体;font-size:medium;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStrExtra}期:<span style="color:#FF0000;">单双肖中特</span><span style="color:#808000;">♋</span><span style="color:#669900;">‖</span><span style="color:#FF0000;">發發</span><span style="color:#669900;">‖</span>开:<span style="color:#CC9900;">？00准</span></p>`;
+                finalOutputs.unshift(defaultHtmlExtra);
+            }
+
+            document.getElementById('content-container').innerHTML = finalOutputs.join('');
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById('content-container').innerHTML = ' ';
+        }
+    }
+    initPredict();
+</script>
+
+</body>
+</html>
