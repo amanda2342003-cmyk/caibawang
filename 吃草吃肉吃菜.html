@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>草菜肉肖</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 5px;
+            background-color: #fff;
+            color: #000;
+        }
+        .content {
+            font-size: 16px;
+            line-height: 1.2;
+        }
+        .win-digit {
+            background-color: yellow;
+            color: #FF0000;
+        }
+        .line-p {
+            font-family: 宋体;
+            font-size: medium;
+            font-weight: bold;
+            line-height: 32px;
+            margin: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+<div id="content-container" class="content"></div>
+
+<script>
+    const SPREADSHEET_ID = '19wtMwveTJ_eW09pp7ANQj1NkLNbHIA4kWLsoNAk5Xd8';
+    const SHEET_NAME_KQ = 'KQ_XIANGGANG';
+    const SHEET_NAME_DULIEU = 'DULIEU';
+
+    const URL_KQ = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME_KQ}&_=${Date.now()}`;
+    const URL_DULIEU = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME_DULIEU}&_=${Date.now()}`;
+
+    let duLieuMapB = {};
+    let duLieuMapE = {};
+
+    // 1. Phân loại 12 con giáp vào 3 nhóm
+    const CHI_ROU = ["虎", "蛇", "龙", "狗"];
+    const CHI_CAI = ["猪", "鼠", "鸡", "猴"];
+    const CHI_CAO = ["牛", "羊", "马", "兔"];
+
+    const CATEGORY_MAP = {
+        "吃肉": CHI_ROU,
+        "吃菜": CHI_CAI,
+        "吃草": CHI_CAO
+    };
+
+    // 2. Danh sách 366 kỳ dự đoán cố định
+    const PREDICT_366 = {
+        1: "吃草吃肉", 2: "吃菜吃草", 3: "吃肉吃菜", 4: "吃草吃肉", 5: "吃菜吃草", 6: "吃草吃肉", 7: "吃菜吃草", 8: "吃草吃肉", 9: "吃肉吃菜", 10: "吃菜吃草",
+        11: "吃肉吃菜", 12: "吃菜吃草", 13: "吃肉吃菜", 14: "吃草吃肉", 15: "吃肉吃菜", 16: "吃菜吃草", 17: "吃肉吃菜", 18: "吃草吃肉", 19: "吃肉吃菜", 20: "吃草吃肉",
+        21: "吃肉吃菜", 22: "吃菜吃草", 23: "吃肉吃菜", 24: "吃菜吃草", 25: "吃肉吃菜", 26: "吃草吃肉", 27: "吃菜吃草", 28: "吃草吃肉", 29: "吃肉吃菜", 30: "吃菜吃草",
+        31: "吃草吃肉", 32: "吃菜吃草", 33: "吃肉吃菜", 34: "吃菜吃草", 35: "吃草吃肉", 36: "吃肉吃菜", 37: "吃菜吃草", 38: "吃草吃肉", 39: "吃肉吃菜", 40: "吃菜吃草",
+        41: "吃肉吃菜", 42: "吃菜吃草", 43: "吃肉吃菜", 44: "吃菜吃草", 45: "吃肉吃菜", 46: "吃草吃肉", 47: "吃菜吃草", 48: "吃肉吃菜", 49: "吃草吃肉", 50: "吃菜吃草",
+        51: "吃草吃肉", 52: "吃肉吃菜", 53: "吃草吃肉", 54: "吃菜吃草", 55: "吃草吃肉", 56: "吃肉吃菜", 57: "吃草吃肉", 58: "吃肉吃菜", 59: "吃菜吃草", 60: "吃肉吃菜",
+        61: "吃菜吃草", 62: "吃肉吃菜", 63: "吃草吃肉", 64: "吃菜吃草", 65: "吃草吃肉", 66: "吃菜吃草", 67: "吃草吃肉", 68: "吃肉吃菜", 69: "吃草吃肉", 70: "吃菜吃草",
+        71: "吃草吃肉", 72: "吃肉吃菜", 73: "吃菜吃草", 74: "吃草吃肉", 75: "吃肉吃菜", 76: "吃菜吃草", 77: "吃草吃肉", 78: "吃肉吃菜", 79: "吃菜吃草", 80: "吃肉吃菜",
+        81: "吃菜吃草", 82: "吃草吃肉", 83: "吃菜吃草", 84: "吃肉吃菜", 85: "吃菜吃草", 86: "吃草吃肉", 87: "吃肉吃菜", 88: "吃草吃肉", 89: "吃菜吃草", 90: "吃肉吃菜",
+        91: "吃草吃肉", 92: "吃菜吃草", 93: "吃肉吃菜", 94: "吃菜吃草", 95: "吃肉吃菜", 96: "吃草吃肉", 97: "吃菜吃草", 98: "吃肉吃菜", 99: "吃草吃肉", 100: "吃菜吃草",
+        101: "吃草吃肉", 102: "吃肉吃菜", 103: "吃草吃肉", 104: "吃菜吃草", 105: "吃草吃肉", 106: "吃菜吃草", 107: "吃肉吃菜", 108: "吃草吃肉", 109: "吃菜吃草", 110: "吃草吃肉",
+        111: "吃菜吃草", 112: "吃肉吃菜", 113: "吃菜吃草", 114: "吃肉吃菜", 115: "吃菜吃草", 116: "吃肉吃菜", 117: "吃菜吃草", 118: "吃草吃肉", 119: "吃菜吃草", 120: "吃草吃肉",
+        121: "吃菜吃草", 122: "吃草吃肉", 123: "吃菜吃草", 124: "吃草吃肉", 125: "吃菜吃草", 126: "吃草吃肉", 127: "吃肉吃菜", 128: "吃草吃肉", 129: "吃肉吃菜", 130: "吃菜吃草",
+        131: "吃肉吃菜", 132: "吃菜吃草", 133: "吃肉吃菜", 134: "吃菜吃草", 135: "吃肉吃菜", 136: "吃草吃肉", 137: "吃菜吃草", 138: "吃草吃肉", 139: "吃菜吃草", 140: "吃草吃肉",
+        141: "吃菜吃草", 142: "吃草吃肉", 143: "吃菜吃草", 144: "吃肉吃菜", 145: "吃草吃肉", 146: "吃菜吃草", 147: "吃肉吃菜", 148: "吃草吃肉", 149: "吃肉吃菜", 150: "吃草吃肉",
+        151: "吃菜吃草", 152: "吃肉吃菜", 153: "吃草吃肉", 154: "吃肉吃菜", 155: "吃菜吃草", 156: "吃草吃肉", 157: "吃肉吃菜", 158: "吃菜吃草", 159: "吃肉吃菜", 160: "吃菜吃草",
+        161: "吃草吃肉", 162: "吃肉吃菜", 163: "吃菜吃草", 164: "吃肉吃菜", 165: "吃草吃肉", 166: "吃菜吃草", 167: "吃草吃肉", 168: "吃菜吃草", 169: "吃肉吃菜", 170: "吃菜吃草",
+        171: "吃草吃肉", 172: "吃菜吃草", 173: "吃草吃肉", 174: "吃肉吃菜", 175: "吃草吃肉", 176: "吃菜吃草", 177: "吃草吃肉", 178: "吃菜吃草", 179: "吃肉吃菜", 180: "吃草吃肉",
+        181: "吃肉吃菜", 182: "吃菜吃草", 183: "吃肉吃菜", 184: "吃菜吃草", 185: "吃草吃肉", 186: "吃肉吃菜", 187: "吃草吃肉", 188: "吃菜吃草", 189: "吃草吃肉", 190: "吃肉吃菜",
+        191: "吃草吃肉", 192: "吃菜吃草", 193: "吃草吃肉", 194: "吃菜吃草", 195: "吃肉吃菜", 196: "吃菜吃草", 197: "吃草吃肉", 198: "吃菜吃草", 199: "吃草吃肉", 200: "吃肉吃菜",
+        201: "吃肉吃草", 202: "吃草吃菜", 203: "吃菜吃肉", 204: "吃草吃菜", 205: "吃肉吃草", 206: "吃菜吃肉", 207: "吃肉吃草", 208: "吃草吃菜", 209: "吃肉吃草", 210: "吃菜吃肉",
+        211: "吃肉吃草", 212: "吃草吃菜", 213: "吃菜吃肉", 214: "吃肉吃草", 215: "吃菜吃肉", 216: "吃肉吃草", 217: "吃菜吃肉", 218: "吃肉吃草", 219: "吃菜吃肉", 220: "吃肉吃草",
+        221: "吃菜吃肉", 222: "吃草吃菜", 223: "吃肉吃草", 224: "吃菜吃肉", 225: "吃肉吃草", 226: "吃菜吃肉", 227: "吃肉吃草", 228: "吃草吃菜", 229: "吃肉吃草", 230: "吃菜吃肉",
+        231: "吃肉吃草", 232: "吃草吃菜", 233: "吃菜吃肉", 234: "吃肉吃草", 235: "吃菜吃肉", 236: "吃肉吃草", 237: "吃草吃菜", 238: "吃菜吃肉", 239: "吃草吃菜", 240: "吃菜吃肉",
+        241: "吃肉吃草", 242: "吃草吃菜", 243: "吃菜吃肉", 244: "吃肉吃草", 245: "吃草吃菜", 246: "吃肉吃草", 247: "吃菜吃肉", 248: "吃肉吃草", 249: "吃菜吃肉", 250: "吃肉吃草",
+        251: "吃草吃菜", 252: "吃肉吃草", 253: "吃菜吃肉", 254: "吃草吃菜", 255: "吃菜吃肉", 256: "吃草吃菜", 257: "吃肉吃草", 258: "吃菜吃肉", 259: "吃肉吃草", 260: "吃草吃菜",
+        261: "吃肉吃草", 262: "吃草吃菜", 263: "吃菜吃肉", 264: "吃草吃菜", 265: "吃菜吃肉", 266: "吃肉吃草", 267: "吃菜吃肉", 268: "吃肉吃草", 269: "吃菜吃肉", 270: "吃肉吃草",
+        271: "吃菜吃肉", 272: "吃肉吃草", 273: "吃菜吃肉", 274: "吃肉吃草", 275: "吃草吃菜", 276: "吃肉吃草", 277: "吃菜吃肉", 278: "吃肉吃草", 279: "吃草吃菜", 280: "吃肉吃草",
+        281: "吃草吃菜", 282: "吃菜吃肉", 283: "吃草吃菜", 284: "吃肉吃草", 285: "吃菜吃肉", 286: "吃草吃菜", 287: "吃菜吃肉", 288: "吃草吃菜", 289: "吃肉吃草", 290: "吃草吃菜",
+        291: "吃肉吃草", 292: "吃菜吃肉", 293: "吃草吃菜", 294: "吃菜吃肉", 295: "吃草吃菜", 296: "吃肉吃草", 297: "吃草吃菜", 298: "吃肉吃草", 299: "吃菜吃肉", 300: "吃肉吃草",
+        301: "吃草吃菜", 302: "吃肉吃草", 303: "吃草吃菜", 304: "吃菜吃肉", 305: "吃肉吃草", 306: "吃草吃菜", 307: "吃肉吃草", 308: "吃菜吃肉", 309: "吃草吃菜", 310: "吃肉吃草",
+        311: "吃菜吃肉", 312: "吃草吃菜", 313: "吃菜吃肉", 314: "吃肉吃草", 315: "吃菜吃肉", 316: "吃草吃菜", 317: "吃菜吃肉", 318: "吃草吃菜", 319: "吃肉吃草", 320: "吃菜吃肉",
+        321: "吃肉吃草", 322: "吃菜吃肉", 323: "吃肉吃草", 324: "吃菜吃肉", 325: "吃肉吃草", 326: "吃草吃菜", 327: "吃肉吃草", 328: "吃菜吃肉", 329: "吃肉吃草", 330: "吃菜吃肉",
+        331: "吃草吃菜", 332: "吃肉吃草", 333: "吃菜吃肉", 334: "吃肉吃草", 335: "吃草吃菜", 336: "吃菜吃肉", 337: "吃肉吃草", 338: "吃菜吃肉", 339: "吃草吃菜", 340: "吃菜吃肉",
+        341: "吃草吃菜", 342: "吃肉吃草", 343: "吃草吃菜", 344: "吃肉吃草", 345: "吃菜吃肉", 346: "吃肉吃草", 347: "吃草吃菜", 348: "吃肉吃草", 349: "吃草吃菜", 350: "吃菜吃肉",
+        351: "吃肉吃草", 352: "吃菜吃肉", 353: "吃草吃菜", 354: "吃肉吃草", 355: "吃菜吃肉", 356: "吃草吃菜", 357: "吃肉吃草", 358: "吃草吃菜", 359: "吃肉吃草", 360: "吃草吃菜",
+        361: "吃肉吃草", 362: "吃草吃菜", 363: "吃肉吃草", 364: "吃菜吃肉", 365: "吃肉吃草", 366: "吃草吃菜"
+    };
+
+    function fetchJSONP(url) {
+        return fetch(url)
+            .then(res => res.text())
+            .then(text => {
+                const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+                if (match && match[1]) return JSON.parse(match[1]);
+                throw new Error("Cannot parse JSONP response");
+            });
+    }
+
+    // Tách 2 lựa chọn dự đoán (VD: "吃草吃肉" -> ["吃草", "吃肉"])
+    function getTwoChoicesForKy(kyNum) {
+        let key = ((kyNum - 1) % 366) + 1;
+        let rawStr = PREDICT_366[key] || "吃草吃肉";
+        let c1 = rawStr.substring(0, 2);
+        let c2 = rawStr.substring(2, 4);
+        return [c1, c2];
+    }
+
+    function formatTwoDigits(val) {
+        let cleanVal = String(val).trim();
+        let num = parseInt(cleanVal.replace(/\D/g, ''), 10);
+        if (isNaN(num)) return '';
+        return String(num).padStart(2, '0');
+    }
+
+    function formatThreeDigits(val) {
+        let num = parseInt(String(val).replace(/\D/g, ''), 10);
+        if (isNaN(num)) return '001';
+        return String(num).padStart(3, '0');
+    }
+
+    // Hàm tạo HTML hiển thị chuẩn theo mẫu mã gốc
+    function buildLineHtml(kyStr, choiceHtml, resultStr) {
+        return `<p class="line-p">${kyStr}期:<span style="color:#006699;">草菜肉肖</span><span style="color:#808000;">♋</span><span style="color:#669900;">‖${choiceHtml}‖</span>开:<span style="color:#CC9900;">${resultStr}</span>准</p>`;
+    }
+
+    async function initPredict() {
+        try {
+            const rawRules = await fetchJSONP(URL_DULIEU);
+            if (rawRules.table && rawRules.table.rows) {
+                rawRules.table.rows.forEach(r => {
+                    if (r.c && r.c[0] && r.c[0].v !== null && r.c[0].v !== undefined) {
+                        let formattedNum = formatTwoDigits(r.c[0].v);
+                        let animalB = (r.c[1] && r.c[1].v !== null && r.c[1].v !== undefined) ? String(r.c[1].v).trim() : '';
+                        let animalE = (r.c[4] && r.c[4].v !== null && r.c[4].v !== undefined) ? String(r.c[4].v).trim() : '';
+                        
+                        if (formattedNum) {
+                            if (animalB) duLieuMapB[formattedNum] = animalB;
+                            if (animalE) duLieuMapE[formattedNum] = animalE;
+                        }
+                    }
+                });
+            }
+
+            const rawKQ = await fetchJSONP(URL_KQ);
+            const rows = rawKQ.table.rows;
+            let parsedList = [];
+            let lastXRowIndex = -1;
+
+            if (rows) {
+                for (let i = 0; i < rows.length; i++) {
+                    const r = rows[i].c;
+                    if (!r) continue;
+
+                    let isXRow = false;
+                    for (let colIdx = 1; colIdx <= 7; colIdx++) {
+                        if (r[colIdx] && r[colIdx].v !== null && r[colIdx].v !== undefined) {
+                            if (String(r[colIdx].v).trim().toLowerCase() === 'x') {
+                                isXRow = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isXRow) {
+                        lastXRowIndex = i;
+                        continue;
+                    }
+
+                    if (!r[0] || r[0].v === null || r[0].v === undefined) continue;
+
+                    let kyRaw = String(r[0].v).trim();
+                    let kyOnlyNum = parseInt(kyRaw.replace(/\D/g, ''), 10) || 0;
+                    
+                    let numTeFormatted = '';
+                    if (r[7] && r[7].v !== null && r[7].v !== undefined) {
+                        let valStr = String(r[7].v).trim();
+                        if (valStr !== '' && valStr !== '0' && valStr !== '00') {
+                            numTeFormatted = formatTwoDigits(valStr);
+                        }
+                    }
+
+                    if (kyOnlyNum > 0) {
+                        parsedList.push({
+                            rowIndex: i,
+                            kyNum: kyOnlyNum,
+                            numTe: numTeFormatted
+                        });
+                    }
+                }
+            }
+
+            let doneList = [];
+            let pendingKyObj = null;
+
+            for (let i = 0; i < parsedList.length; i++) {
+                let item = parsedList[i];
+                let isDone = item.numTe !== '' && item.numTe !== '00';
+                if (isDone) {
+                    item.useMapE = (lastXRowIndex !== -1 && item.rowIndex > lastXRowIndex);
+                    doneList.push(item);
+                } else {
+                    pendingKyObj = item;
+                }
+            }
+
+            let targetPredictKy = 1;
+            if (pendingKyObj) {
+                targetPredictKy = pendingKyObj.kyNum;
+            } else if (doneList.length > 0) {
+                targetPredictKy = doneList[doneList.length - 1].kyNum + 1;
+            }
+
+            let winEntries = [];
+            let consecutiveLosses = 0;
+
+            for (let i = doneList.length - 1; i >= 0; i--) {
+                let item = doneList[i];
+                let [c1, c2] = getTwoChoicesForKy(item.kyNum);
+                
+                let activeMap = item.useMapE ? duLieuMapE : duLieuMapB;
+                let actualShengXiao = activeMap[item.numTe] || duLieuMapB[item.numTe] || '';
+
+                let list1 = CATEGORY_MAP[c1] || [];
+                let list2 = CATEGORY_MAP[c2] || [];
+
+                let hitChoice = "";
+                if (list1.includes(actualShengXiao)) {
+                    hitChoice = "c1";
+                } else if (list2.includes(actualShengXiao)) {
+                    hitChoice = "c2";
+                }
+
+                let isWin = (hitChoice !== "");
+                
+                if (isWin) {
+                    consecutiveLosses = 0;
+                    winEntries.push({ item, c1, c2, hitChoice, actualShengXiao });
+                    if (winEntries.length === 14) {
+                        break;
+                    }
+                } else {
+                    consecutiveLosses++;
+                    if (consecutiveLosses >= 3) {
+                        break;
+                    }
+                }
+            }
+
+            let nextKyNum = targetPredictKy;
+            let [nextC1, nextC2] = getTwoChoicesForKy(nextKyNum);
+            let kyStrNext = formatThreeDigits(nextKyNum);
+
+            // Kỳ mới chưa mở thưởng
+            let htmlNextKy = buildLineHtml(kyStrNext, `${nextC1}${nextC2}`, "？00");
+
+            let historyOutputs = [];
+
+            for (let i = 0; i < winEntries.length; i++) {
+                let entry = winEntries[i];
+                let kyStr = formatThreeDigits(entry.item.kyNum);
+                
+                // Bôi nền vàng chữ đỏ CHỈ CHO VỊ TRÍ TRÚNG
+                let choiceHtml = "";
+                if (entry.hitChoice === "c1") {
+                    choiceHtml = `<span class="win-digit">${entry.c1}</span>${entry.c2}`;
+                } else if (entry.hitChoice === "c2") {
+                    choiceHtml = `${entry.c1}<span class="win-digit">${entry.c2}</span>`;
+                } else {
+                    choiceHtml = `${entry.c1}${entry.c2}`;
+                }
+
+                let resultText = `${entry.actualShengXiao}${entry.item.numTe}`;
+
+                historyOutputs.push(buildLineHtml(kyStr, choiceHtml, resultText));
+            }
+
+            let finalOutputs = [htmlNextKy, ...historyOutputs];
+
+            // Nếu trượt quá 3 kỳ, áp dụng kỳ mặc định 【發發發發】
+            let currentCount = finalOutputs.length;
+            if (currentCount === 1) {
+                let kyStr1 = formatThreeDigits(nextKyNum + 1);
+                let kyStr2 = formatThreeDigits(nextKyNum + 2);
+                let defaultHtml1 = buildLineHtml(kyStr1, "發發發發", "？00");
+                let defaultHtml2 = buildLineHtml(kyStr2, "發發發發", "？00");
+                finalOutputs.unshift(defaultHtml1);
+                finalOutputs.unshift(defaultHtml2);
+            } else if (currentCount === 2) {
+                let kyStrExtra = formatThreeDigits(nextKyNum + 1);
+                let defaultHtmlExtra = buildLineHtml(kyStrExtra, "發發發發", "？00");
+                finalOutputs.unshift(defaultHtmlExtra);
+            }
+
+            document.getElementById('content-container').innerHTML = finalOutputs.join('');
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById('content-container').innerHTML = '';
+        }
+    }
+    initPredict();
+</script>
+
+</body>
+</html>
