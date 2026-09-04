@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大小头数中特</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 5px;
+            background-color: #fff;
+            color: #000;
+        }
+        .content {
+            font-size: 12pt;
+        }
+        .win-digit {
+            color: #FF0000;
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+
+<div id="content-container" class="content"></div>
+
+<script>
+    const SPREADSHEET_ID = '19wtMwveTJ_eW09pp7ANQj1NkLNbHIA4kWLsoNAk5Xd8';
+    const SHEET_NAME_KQ = 'KQ_XIANGGANG';
+    const SHEET_NAME_DULIEU = 'DULIEU';
+
+    const URL_KQ = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME_KQ}&_=${Date.now()}`;
+    const URL_DULIEU = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME_DULIEU}&_=${Date.now()}`;
+
+    let duLieuMapB = {};
+    let duLieuMapE = {};
+
+    // 366 kỳ dự đoán cố định
+    const STATIC_PREDICTIONS = {
+        1: "大数+1头", 2: "小数+4头", 3: "小数+3头", 4: "大数+2头", 5: "小数+4头", 6: "大数+1头", 7: "大数+2头", 8: "小数+3头", 9: "大数+0头", 10: "大数+1头",
+        11: "小数+4头", 12: "大数+0头", 13: "小数+3头", 14: "小数+2头", 15: "大数+0头", 16: "小数+3头", 17: "小数+4头", 18: "大数+0头", 19: "大数+2头", 20: "小数+3头",
+        21: "大数+1头", 22: "小数+4头", 23: "小数+2头", 24: "大数+1头", 25: "大数+0头", 26: "小数+3头", 27: "小数+2头", 28: "大数+1头", 29: "小数+4头", 30: "大数+2头",
+        31: "小数+3头", 32: "大数+0头", 33: "小数+2头", 34: "小数+3头", 35: "大数+1头", 36: "小数+2头", 37: "小数+4头", 38: "大数+1头", 39: "小数+2头", 40: "小数+3头",
+        41: "大数+0头", 42: "小数+2头", 43: "大数+1头", 44: "小数+4头", 45: "大数+0头", 46: "小数+3头", 47: "大数+2头", 48: "小数+4头", 49: "大数+1头", 50: "小数+2头",
+        51: "大数+0头", 52: "小数+3头", 53: "小数+2头", 54: "大数+1头", 55: "小数+3头", 56: "小数+2头", 57: "大数+0头", 58: "大数+1头", 59: "小数+3头", 60: "大数+0头",
+        61: "大数+1头", 62: "小数+3头", 63: "小数+2头", 64: "大数+0头", 65: "大数+1头", 66: "小数+4头", 67: "大数+2头", 68: "小数+3头", 69: "大数+1头", 70: "小数+2头",
+        71: "小数+3头", 72: "大数+0头", 73: "大数+1头", 74: "小数+2头", 75: "大数+0头", 76: "小数+4头", 77: "小数+2头", 78: "大数+1头", 79: "小数+3头", 80: "大数+0头",
+        81: "小数+2头", 82: "小数+3头", 83: "大数+1头", 84: "小数+2头", 85: "大数+0头", 86: "小数+3头", 87: "大数+2头", 88: "大数+0头", 89: "小数+4头", 90: "大数+1头",
+        91: "小数+3头", 92: "小数+2头", 93: "大数+1头", 94: "小数+4头", 95: "小数+3头", 96: "大数+2头", 97: "大数+1头", 98: "小数+3头", 99: "小数+2头", 100: "大数+0头",
+        101: "小数+4头", 102: "大数+2头", 103: "大数+1头", 104: "小数+3头", 105: "小数+4头", 106: "大数+1头", 107: "大数+2头", 108: "小数+4头", 109: "大数+0头", 110: "大数+2头",
+        111: "小数+3头", 112: "大数+0头", 113: "大数+2头", 114: "小数+3头", 115: "大数+1头", 116: "小数+2头", 117: "大数+0头", 118: "大数+1头", 119: "小数+2头", 120: "大数+0头",
+        121: "小数+3头", 122: "大数+1头", 123: "小数+4头", 124: "大数+2头", 125: "小数+3头", 126: "大数+0头", 127: "大数+1头", 128: "小数+2头", 129: "小数+3头", 130: "大数+1头",
+        131: "小数+4头", 132: "大数+0头", 133: "大数+2头", 134: "小数+4头", 135: "大数+1头", 136: "小数+3头", 137: "大数+0头", 138: "大数+1头", 139: "小数+2头", 140: "小数+4头",
+        141: "大数+1头", 142: "小数+2头", 143: "小数+4头", 144: "大数+0头", 145: "小数+3头", 146: "大数+1头", 147: "小数+4头", 148: "大数+2头", 149: "大数+0头", 150: "小数+4头",
+        151: "小数+2头", 152: "大数+1头", 153: "大数+0头", 154: "小数+3头", 155: "大数+2头", 156: "小数+4头", 157: "大数+0头", 158: "大数+1头", 159: "小数+4头", 160: "大数+2头",
+        161: "小数+3头", 162: "小数+4头", 163: "大数+2头", 164: "小数+3头", 165: "大数+1头", 166: "大数+2头", 167: "小数+4头", 168: "小数+3头", 169: "大数+2头", 170: "小数+4头",
+        171: "大数+1头", 172: "小数+2头", 173: "大数+0头", 174: "小数+3头", 175: "小数+4头", 176: "大数+1头", 177: "小数+2头", 178: "小数+4头", 179: "大数+0头", 180: "大数+2头",
+        181: "小数+3头", 182: "大数+1头", 183: "小数+4头", 184: "小数+2头", 185: "大数+0头", 186: "小数+3头", 187: "小数+4头", 188: "大数+1头", 189: "大数+2头", 190: "小数+4头",
+        191: "大数+1头", 192: "大数+0头", 193: "小数+3头", 194: "小数+4头", 195: "大数+2头", 196: "大数+1头", 197: "小数+4头", 198: "小数+3头", 199: "大数+2头", 200: "大数+0头",
+        201: "小数+3头", 202: "大数+1头", 203: "小数+2头", 204: "小数+3头", 205: "大数+0头", 206: "大数+1头", 207: "小数+2头", 208: "小数+4头", 209: "大数+0头", 210: "小数+2头",
+        211: "小数+3头", 212: "大数+0头", 213: "大数+2头", 214: "小数+3头", 215: "大数+0头", 216: "小数+2头", 217: "小数+4头", 218: "大数+1头", 219: "小数+2头", 220: "大数+0头",
+        221: "大数+1头", 222: "小数+2头", 223: "小数+3头", 224: "大数+1头", 225: "小数+2头", 226: "小数+4头", 227: "大数+0头", 228: "大数+1头", 229: "小数+3头", 230: "小数+4头",
+        231: "大数+0头", 232: "小数+3头", 233: "大数+1头", 234: "大数+2头", 235: "小数+4头", 236: "小数+3头", 237: "大数+0头", 238: "小数+4头", 239: "大数+1头", 240: "大数+0头",
+        241: "小数+2头", 242: "小数+3头", 243: "大数+1头", 244: "大数+0头", 245: "小数+2头", 246: "小数+3头", 247: "大数+0头", 248: "大数+2头", 249: "小数+4头", 250: "小数+3头",
+        251: "大数+1头", 252: "小数+4头", 253: "小数+3头", 254: "大数+0头", 255: "大数+1头", 256: "小数+2头", 257: "小数+3头", 258: "大数+1头", 259: "大数+2头", 260: "小数+4头",
+        261: "小数+3头", 262: "大数+1头", 263: "小数+2头", 264: "大数+0头", 265: "小数+3头", 266: "大数+2头", 267: "大数+1头", 268: "小数+4头", 269: "大数+2头", 270: "大数+0头",
+        271: "小数+4头", 272: "大数+1头", 273: "小数+3头", 274: "小数+4头", 275: "大数+2头", 276: "小数+3头", 277: "大数+1头", 278: "小数+2头", 279: "小数+4头", 280: "大数+1头",
+        281: "小数+3头", 282: "大数+2头", 283: "大数+0头", 284: "小数+3头", 285: "小数+2头", 286: "大数+0头", 287: "大数+1头", 288: "小数+3头", 289: "大数+2头", 290: "小数+4头",
+        291: "小数+3头", 292: "大数+1头", 293: "大数+2头", 294: "小数+4头", 295: "小数+3头", 296: "大数+1头", 297: "大数+2头", 298: "小数+3头", 299: "大数+1头", 300: "小数+2头",
+        301: "大数+1头", 302: "小数+4头", 303: "小数+2头", 304: "大数+1头", 305: "小数+4头", 306: "小数+3头", 307: "大数+2头", 308: "大数+0头", 309: "小数+3头", 310: "小数+4头",
+        311: "大数+0头", 312: "大数+1头", 313: "小数+3头", 314: "大数+0头", 315: "小数+4头", 316: "大数+2头", 317: "大数+1头", 318: "小数+3头", 319: "大数+2头", 320: "大数+1头",
+        321: "小数+3头", 322: "小数+2头", 323: "大数+1头", 324: "大数+0头", 325: "小数+4头", 326: "大数+2头", 327: "小数+3头", 328: "小数+4头", 329: "大数+0头", 330: "小数+3头",
+        331: "小数+4头", 332: "大数+0头", 333: "大数+2头", 334: "小数+3头", 335: "大数+0头", 336: "大数+1头", 337: "小数+2头", 338: "小数+3头", 339: "大数+1头", 340: "大数+2头",
+        341: "小数+3头", 342: "小数+4头", 343: "大数+1头", 344: "大数+0头", 345: "小数+4头", 346: "小数+3头", 347: "大数+2头", 348: "大数+0头", 349: "小数+3头", 350: "小数+4头",
+        351: "大数+2头", 352: "大数+0头", 353: "小数+3头", 354: "大数+1头", 355: "大数+0头", 356: "小数+4头", 357: "小数+2头", 358: "大数+0头", 359: "小数+4头", 360: "小数+3头",
+        361: "大数+1头", 362: "小数+4头", 363: "大数+0头", 364: "小数+3头", 365: "大数+2头", 366: "小数+4头"
+    };
+
+    function fetchJSONP(url) {
+        return fetch(url)
+            .then(res => res.text())
+            .then(text => {
+                const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+                if (match && match[1]) return JSON.parse(match[1]);
+                throw new Error(" ");
+            });
+    }
+
+    function getPredictForKy(kyNum) {
+        let actualKy = ((kyNum - 1) % 366) + 1;
+        return STATIC_PREDICTIONS[actualKy] || "小数+4头";
+    }
+
+    // Kiểm tra chính xác vế trước, vế sau hoặc cả hai cùng trúng
+    function checkHit(predictStr, numStr) {
+        let num = parseInt(numStr, 10);
+        if (isNaN(num) || num < 1 || num > 49) {
+            return { isWin: false, hit1: false, hit2: false };
+        }
+
+        let parts = predictStr.split('+');
+        let part1 = parts[0]; // 大数 / 小数
+        let part2 = parts[1]; // 0头..4头
+
+        let hit1 = false;
+        if (part1 === "小数" && num >= 1 && num <= 24) hit1 = true;
+        if (part1 === "大数" && num >= 25 && num <= 49) hit1 = true;
+
+        let hit2 = false;
+        if (part2 === "0头" && num >= 1 && num <= 9) hit2 = true;
+        if (part2 === "1头" && num >= 10 && num <= 19) hit2 = true;
+        if (part2 === "2头" && num >= 20 && num <= 29) hit2 = true;
+        if (part2 === "3头" && num >= 30 && num <= 39) hit2 = true;
+        if (part2 === "4头" && num >= 40 && num <= 49) hit2 = true;
+
+        return {
+            isWin: hit1 || hit2,
+            hit1: hit1,
+            hit2: hit2
+        };
+    }
+
+    function formatTwoDigits(val) {
+        let cleanVal = String(val).trim();
+        let num = parseInt(cleanVal.replace(/\D/g, ''), 10);
+        if (isNaN(num)) return '';
+        return String(num).padStart(2, '0');
+    }
+
+    function formatThreeDigits(val) {
+        let num = parseInt(String(val).replace(/\D/g, ''), 10);
+        if (isNaN(num)) return '001';
+        return String(num).padStart(3, '0');
+    }
+
+    async function initPredict() {
+        try {
+            const rawRules = await fetchJSONP(URL_DULIEU);
+            if (rawRules.table && rawRules.table.rows) {
+                rawRules.table.rows.forEach(r => {
+                    if (r.c && r.c[0] && r.c[0].v !== null && r.c[0].v !== undefined) {
+                        let formattedNum = formatTwoDigits(r.c[0].v);
+                        let animalB = (r.c[1] && r.c[1].v !== null && r.c[1].v !== undefined) ? String(r.c[1].v).trim() : '';
+                        let animalE = (r.c[4] && r.c[4].v !== null && r.c[4].v !== undefined) ? String(r.c[4].v).trim() : '';
+                        
+                        if (formattedNum) {
+                            if (animalB) duLieuMapB[formattedNum] = animalB;
+                            if (animalE) duLieuMapE[formattedNum] = animalE;
+                        }
+                    }
+                });
+            }
+
+            const rawKQ = await fetchJSONP(URL_KQ);
+            const rows = rawKQ.table.rows;
+            let parsedList = [];
+            let lastXRowIndex = -1;
+
+            if (rows) {
+                for (let i = 0; i < rows.length; i++) {
+                    const r = rows[i].c;
+                    if (!r) continue;
+
+                    let isXRow = false;
+                    for (let colIdx = 1; colIdx <= 7; colIdx++) {
+                        if (r[colIdx] && r[colIdx].v !== null && r[colIdx].v !== undefined) {
+                            if (String(r[colIdx].v).trim().toLowerCase() === 'x') {
+                                isXRow = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isXRow) {
+                        lastXRowIndex = i;
+                        continue;
+                    }
+
+                    if (!r[0] || r[0].v === null || r[0].v === undefined) continue;
+
+                    let kyRaw = String(r[0].v).trim();
+                    let kyOnlyNum = parseInt(kyRaw.replace(/\D/g, ''), 10) || 0;
+                    
+                    let numTeFormatted = '';
+                    if (r[7] && r[7].v !== null && r[7].v !== undefined) {
+                        let valStr = String(r[7].v).trim();
+                        if (valStr !== '' && valStr !== '0' && valStr !== '00') {
+                            numTeFormatted = formatTwoDigits(valStr);
+                        }
+                    }
+
+                    if (kyOnlyNum > 0) {
+                        parsedList.push({
+                            rowIndex: i,
+                            kyNum: kyOnlyNum,
+                            numTe: numTeFormatted
+                        });
+                    }
+                }
+            }
+
+            let doneList = [];
+            let pendingKyObj = null;
+
+            for (let i = 0; i < parsedList.length; i++) {
+                let item = parsedList[i];
+                let isDone = item.numTe !== '' && item.numTe !== '00';
+                if (isDone) {
+                    item.useMapE = (lastXRowIndex !== -1 && item.rowIndex > lastXRowIndex);
+                    doneList.push(item);
+                } else {
+                    pendingKyObj = item;
+                }
+            }
+
+            let targetPredictKy = 1;
+            if (pendingKyObj) {
+                targetPredictKy = pendingKyObj.kyNum;
+            } else if (doneList.length > 0) {
+                targetPredictKy = doneList[doneList.length - 1].kyNum + 1;
+            }
+
+            let winEntries = [];
+            let consecutiveLosses = 0;
+
+            for (let i = doneList.length - 1; i >= 0; i--) {
+                let item = doneList[i];
+                let predicted = getPredictForKy(item.kyNum);
+                let hitResult = checkHit(predicted, item.numTe);
+                
+                if (hitResult.isWin) {
+                    consecutiveLosses = 0;
+                    winEntries.push({ item, predicted, hit1: hitResult.hit1, hit2: hitResult.hit2 });
+                    if (winEntries.length === 14) {
+                        break;
+                    }
+                } else {
+                    consecutiveLosses++;
+                    if (consecutiveLosses >= 3) {
+                        break;
+                    }
+                }
+            }
+
+            let nextKyNum = targetPredictKy;
+            let predictNext = getPredictForKy(nextKyNum);
+            let kyStrNext = formatThreeDigits(nextKyNum);
+
+            let htmlNextKy = `<p style="font-family:宋体;font-size:12pt;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStrNext}期:→┣<span style="color:orange;">┣</span><span style="color:#FF0000;">${predictNext}</span><span style="color:orange;">┫</span>┫←开:<span style="color:#FF0000;">？00准</span></p>`;
+
+            let historyOutputs = [];
+
+            for (let i = 0; i < winEntries.length; i++) {
+                let entry = winEntries[i];
+                let activeMap = entry.item.useMapE ? duLieuMapE : duLieuMapB;
+                let shengXiaoWin = activeMap[entry.item.numTe] || duLieuMapB[entry.item.numTe] || '';
+                
+                let resStrWin = shengXiaoWin + entry.item.numTe + '准';
+                let kyStr = formatThreeDigits(entry.item.kyNum);
+                
+                let parts = entry.predicted.split('+');
+                let part1Html = entry.hit1 ? `<span class="win-digit">${parts[0]}</span>` : parts[0];
+                let part2Html = entry.hit2 ? `<span class="win-digit">${parts[1]}</span>` : parts[1];
+                let formattedPredictHtml = `${part1Html}+${part2Html}`;
+
+                historyOutputs.push(`<p style="font-family:宋体;font-size:12pt;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStr}期:→┣<span style="color:orange;">┣</span><span style="color:#FF0000;">${formattedPredictHtml}</span><span style="color:orange;">┫</span>┫←开:<span style="color:#FF0000;">${resStrWin}</span></p>`);
+            }
+
+            let finalOutputs = [htmlNextKy, ...historyOutputs];
+
+            let currentCount = finalOutputs.length;
+            if (currentCount === 1) {
+                let kyStr1 = formatThreeDigits(nextKyNum + 1);
+                let kyStr2 = formatThreeDigits(nextKyNum + 2);
+                let defaultHtml1 = `<p style="font-family:宋体;font-size:12pt;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStr1}期:→┣<span style="color:orange;">┣</span><span style="color:#FF0000;">發發+$头</span><span style="color:orange;">┫</span>┫←开:<span style="color:#FF0000;">？00准</span></p>`;
+                let defaultHtml2 = `<p style="font-family:宋体;font-size:12pt;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStr2}期:→┣<span style="color:orange;">┣</span><span style="color:#FF0000;">發發+$头</span><span style="color:orange;">┫</span>┫←开:<span style="color:#FF0000;">？00准</span></p>`;
+                finalOutputs.unshift(defaultHtml1);
+                finalOutputs.unshift(defaultHtml2);
+            } else if (currentCount === 2) {
+                let kyStrExtra = formatThreeDigits(nextKyNum + 1);
+                let defaultHtmlExtra = `<p style="font-family:宋体;font-size:12pt;font-weight:bold;line-height:32px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${kyStrExtra}期:→┣<span style="color:orange;">┣</span><span style="color:#FF0000;">發發+$头</span><span style="color:orange;">┫</span>┫←开:<span style="color:#FF0000;">？00准</span></p>`;
+                finalOutputs.unshift(defaultHtmlExtra);
+            }
+
+            document.getElementById('content-container').innerHTML = finalOutputs.join('');
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById('content-container').innerHTML = ' ';
+        }
+    }
+    initPredict();
+</script>
+
+</body>
+</html>
